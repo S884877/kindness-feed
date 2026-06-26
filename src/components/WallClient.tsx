@@ -29,6 +29,7 @@ export default function WallClient({ initialMoments }: { initialMoments: Moment[
   const [keptMoments, setKeptMoments] = useState<Moment[]>([])
   const [nudgeDismissed, setNudgeDismissed] = useState(false)
   const [showNudge, setShowNudge] = useState(false)
+  const [nudgeExpanded, setNudgeExpanded] = useState(false)
   const [postTrigger, setPostTrigger] = useState(0)
   const nudgePrompt = useRef(NUDGE_PROMPTS[Math.floor(Math.random() * NUDGE_PROMPTS.length)])
   const supabase = createClient()
@@ -105,6 +106,7 @@ export default function WallClient({ initialMoments }: { initialMoments: Moment[
   function dismissNudge() {
     setNudgeDismissed(true)
     setShowNudge(false)
+    setNudgeExpanded(false)
   }
 
   function nudgeShare() {
@@ -144,29 +146,45 @@ export default function WallClient({ initialMoments }: { initialMoments: Moment[
       )}
 
       {showNudge && !nudgeDismissed && (
-        <div className="nudge-in fixed bottom-20 left-4 right-4 z-30 max-w-lg mx-auto">
-          <div
-            className="rounded-2xl px-5 py-4 flex items-start gap-4"
-            style={{
-              background: 'var(--card)',
-              boxShadow: '0 8px 32px -8px rgba(60,45,30,0.22), 0 2px 8px rgba(60,45,30,0.08)',
-              border: '1px solid var(--line)',
-            }}
-          >
-            <p
-              className="flex-1 text-[14px] text-[var(--ink-soft)] leading-relaxed cursor-pointer"
-              onClick={nudgeShare}
+        <div className="fixed bottom-[80px] left-5 z-30">
+          {nudgeExpanded ? (
+            <div
+              className="nudge-in rounded-2xl p-4 w-64"
+              style={{
+                background: 'var(--card)',
+                boxShadow: '0 8px 32px -8px rgba(60,45,30,0.22), 0 2px 8px rgba(60,45,30,0.08)',
+                border: '1px solid var(--line)',
+              }}
             >
-              {nudgePrompt.current}
-            </p>
+              <p className="text-[13px] text-[var(--ink-soft)] leading-relaxed mb-3">
+                {nudgePrompt.current}
+              </p>
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={nudgeShare}
+                  className="text-[13px] font-medium text-[var(--accent)] hover:underline"
+                >
+                  share the moment
+                </button>
+                <button
+                  onClick={dismissNudge}
+                  className="text-[var(--ink-faint)] hover:text-[var(--ink)] text-lg leading-none"
+                  aria-label="dismiss"
+                >
+                  ×
+                </button>
+              </div>
+            </div>
+          ) : (
             <button
-              onClick={dismissNudge}
-              className="shrink-0 text-[var(--ink-faint)] hover:text-[var(--ink)] text-lg leading-none mt-0.5"
-              aria-label="dismiss"
+              onClick={() => setNudgeExpanded(true)}
+              className="nudge-bubble w-11 h-11 rounded-full flex items-center justify-center"
+              style={{ background: '#f0d9ce' }}
+              aria-label="share a moment"
             >
-              ×
+              <span className="text-[var(--accent)] text-lg leading-none">✦</span>
             </button>
-          </div>
+          )}
         </div>
       )}
 

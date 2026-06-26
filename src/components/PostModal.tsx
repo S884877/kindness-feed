@@ -5,7 +5,25 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 
-const MAX = 280
+const MAX_WORDS = 350
+
+function countWords(text: string): number {
+  return text.trim() === '' ? 0 : text.trim().split(/\s+/).length
+}
+
+function limitWords(text: string, max: number): string {
+  const words = text.split(/(\s+)/)
+  let count = 0
+  let result = ''
+  for (const token of words) {
+    if (/\S/.test(token)) {
+      if (count >= max) break
+      count++
+    }
+    result += token
+  }
+  return result
+}
 
 function randomUsername() {
   const digits = Math.floor(1000 + Math.random() * 9000)
@@ -106,28 +124,42 @@ export default function PostModal({
                 <label className={labelCls}>what act of kindness did someone show you?</label>
                 <textarea
                   value={kindness}
-                  onChange={(e) => setKindness(e.target.value)}
-                  maxLength={MAX}
+                  onChange={(e) => setKindness(limitWords(e.target.value, MAX_WORDS))}
                   rows={3}
                   placeholder="a stranger held the door open even though i was far away..."
                   required
                   className={`${fieldCls} resize-none font-serif`}
                 />
-                <p className="text-right text-[11px] text-[var(--ink-faint)]/70 mt-1.5">{kindness.length}/{MAX}</p>
+                {(() => {
+                  const wc = countWords(kindness)
+                  const atLimit = wc >= MAX_WORDS
+                  return (
+                    <p className="text-right text-[11px] mt-1.5" style={{ color: atLimit ? 'var(--accent)' : 'rgba(168,156,143,0.7)' }}>
+                      {wc} / {MAX_WORDS}
+                    </p>
+                  )
+                })()}
               </div>
 
               <div>
                 <label className={labelCls}>how did it make you feel?</label>
                 <textarea
                   value={feeling}
-                  onChange={(e) => setFeeling(e.target.value)}
-                  maxLength={MAX}
+                  onChange={(e) => setFeeling(limitWords(e.target.value, MAX_WORDS))}
                   rows={3}
                   placeholder="like i wasn't invisible. like i mattered for just a moment..."
                   required
                   className={`${fieldCls} resize-none font-serif italic`}
                 />
-                <p className="text-right text-[11px] text-[var(--ink-faint)]/70 mt-1.5">{feeling.length}/{MAX}</p>
+                {(() => {
+                  const wc = countWords(feeling)
+                  const atLimit = wc >= MAX_WORDS
+                  return (
+                    <p className="text-right text-[11px] mt-1.5" style={{ color: atLimit ? 'var(--accent)' : 'rgba(168,156,143,0.7)' }}>
+                      {wc} / {MAX_WORDS}
+                    </p>
+                  )
+                })()}
               </div>
 
               <div>
