@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import NavBar from '@/components/NavBar'
-import { createClient } from '@/lib/supabase/server'
 
 export const metadata: Metadata = {
   title: 'kindness feed',
@@ -13,19 +12,16 @@ export const metadata: Metadata = {
   },
 }
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-
   return (
     <html lang="en">
       <body>
-        <NavBar user={user} />
-        <main className="max-w-xl mx-auto px-4 py-8">
+        <NavBar />
+        <main className="max-w-[680px] mx-auto px-4 pt-20 pb-24">
           {children}
         </main>
       </body>

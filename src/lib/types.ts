@@ -1,19 +1,11 @@
-export type User = {
-  id: string
-  name: string | null
-  avatar_url: string | null
-  created_at: string
-}
-
 export type Moment = {
   id: string
-  user_id: string
+  user_id: string | null
+  posted_by: string
   kindness: string
   feeling: string
   created_at: string
-  users?: User
-  reaction_counts?: { warmth: number; heart: number }
-  user_reactions?: { warmth: boolean; heart: boolean }
+  warmth_count?: number
 }
 
 export type Reaction = {

@@ -36,36 +36,23 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function MomentPage({ params }: Props) {
   const { id } = await params
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
 
   const { data } = await supabase
     .from('moments')
-    .select(`
-      *,
-      users(id, name, avatar_url),
-      reactions(type, user_id)
-    `)
+    .select('*, reactions(type)')
     .eq('id', id)
     .single()
 
   if (!data) notFound()
 
-  const reacts = data.reactions ?? []
   const moment: Moment = {
     ...data,
-    reaction_counts: {
-      warmth: reacts.filter((r: any) => r.type === 'warmth').length,
-      heart: reacts.filter((r: any) => r.type === 'heart').length,
-    },
-    user_reactions: {
-      warmth: reacts.some((r: any) => r.type === 'warmth' && r.user_id === user?.id),
-      heart: reacts.some((r: any) => r.type === 'heart' && r.user_id === user?.id),
-    },
+    warmth_count: (data.reactions ?? []).filter((r: any) => r.type === 'warmth').length,
   }
 
   return (
     <div className="py-4">
-      <MomentCard moment={moment} currentUserId={user?.id} />
+      <MomentCard moment={moment} />
       <p className="text-center text-stone-300 text-xs mt-8">
         <a href="/" className="hover:text-stone-500 transition-colors">← back to the feed</a>
       </p>
