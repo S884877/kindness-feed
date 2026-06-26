@@ -1,13 +1,22 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import MomentCard from './MomentCard'
 import { Moment } from '@/lib/types'
 import type { Session } from '@/lib/session'
 
 const PAGE_SIZE = 10
+const NUDGE_INSERT_AFTER = 4
 const COLUMNS = 'id, kindness, feeling, location, mood, created_at, posted_by, user_id'
+
+const NUDGE_PROMPTS = [
+  "you've been reading for a while. something must have stayed with you.",
+  "did someone do something small that meant everything? tell us.",
+  "when did a stranger's kindness catch you off guard? we'd love to hear it.",
+  "is there a moment of kindness you still think about? share it here.",
+  "someone out there needs to hear what you experienced. share your moment.",
+]
 
 async function fetchMoments(supabase: ReturnType<typeof createClient>, from: number) {
   const { data, error } = await supabase
@@ -19,18 +28,45 @@ async function fetchMoments(supabase: ReturnType<typeof createClient>, from: num
   return data as Moment[]
 }
 
+function NudgeCard({ onShare }: { onShare: () => void }) {
+  const prompt = useRef(NUDGE_PROMPTS[Math.floor(Math.random() * NUDGE_PROMPTS.length)])
+  return (
+    <div
+      className="rounded-[22px] px-7 py-6"
+      style={{
+        background: '#fdf0e6',
+        border: '1px solid #f0d5be',
+        boxShadow:
+          '0 1px 2px rgba(60, 45, 30, 0.04), 0 8px 24px rgba(60, 45, 30, 0.06)',
+      }}
+    >
+      <p className="font-serif text-[19px] leading-[1.5] text-[var(--ink)] mb-5">
+        {prompt.current}
+      </p>
+      <button
+        onClick={onShare}
+        className="press text-sm font-semibold text-[var(--accent)] hover:underline"
+      >
+        share my moment
+      </button>
+    </div>
+  )
+}
+
 export default function Feed({
   initialMoments,
   session,
   savedIds,
   onSaveToggle,
   onAuthRequired,
+  onNudgeShare,
 }: {
   initialMoments: Moment[]
   session: Session | null
   savedIds: Set<string>
   onSaveToggle: (id: string, saved: boolean) => void
   onAuthRequired: () => void
+  onNudgeShare: () => void
 }) {
   const [moments, setMoments] = useState<Moment[]>(initialMoments)
   const [loading, setLoading] = useState(false)
@@ -61,20 +97,33 @@ export default function Feed({
     return () => observer.disconnect()
   }, [loadMore])
 
+  function handleNudgeShare() {
+    if (!session) { onAuthRequired(); return }
+    onNudgeShare()
+  }
+
+  const cards: React.ReactNode[] = []
+  moments.forEach((m, i) => {
+    cards.push(
+      <MomentCard
+        key={m.id}
+        moment={m}
+        index={i}
+        session={session}
+        initialSaved={savedIds.has(m.id)}
+        onSaveToggle={onSaveToggle}
+        onAuthRequired={onAuthRequired}
+      />
+    )
+    if (i === NUDGE_INSERT_AFTER - 1) {
+      cards.push(<NudgeCard key="nudge" onShare={handleNudgeShare} />)
+    }
+  })
+
   return (
     <div>
       <div className="flex flex-col gap-5">
-        {moments.map((m, i) => (
-          <MomentCard
-            key={m.id}
-            moment={m}
-            index={i}
-            session={session}
-            initialSaved={savedIds.has(m.id)}
-            onSaveToggle={onSaveToggle}
-            onAuthRequired={onAuthRequired}
-          />
-        ))}
+        {cards}
       </div>
       <div id="feed-sentinel" className="h-4 mt-4" />
       {loading && <p className="text-center text-stone-400 text-sm py-6">loading more...</p>}
