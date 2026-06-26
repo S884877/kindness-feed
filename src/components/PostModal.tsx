@@ -40,7 +40,7 @@ export default function PostModal() {
       posted_by: randomUsername(),
     })
     if (err) {
-      setError('Something went wrong. Try again.')
+      setError('something went wrong. try again.')
       setLoading(false)
       return
     }
@@ -57,7 +57,7 @@ export default function PostModal() {
         className="fixed bottom-6 right-6 z-30 bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white font-semibold text-sm px-5 py-3.5 rounded-full shadow-lg transition-colors flex items-center gap-2"
       >
         <span className="text-base leading-none">✦</span>
-        Share a moment
+        share a moment
       </button>
 
       {/* Backdrop */}
@@ -69,7 +69,7 @@ export default function PostModal() {
           {/* Modal */}
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6">
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-bold text-stone-900">Share a moment</h2>
+              <h2 className="text-lg font-bold text-stone-900">share a moment</h2>
               <button
                 onClick={closeModal}
                 className="text-stone-400 hover:text-stone-600 transition-colors text-xl leading-none"
@@ -82,14 +82,14 @@ export default function PostModal() {
             <form onSubmit={handleSubmit} className="flex flex-col gap-5">
               <div>
                 <label className="block text-xs font-semibold text-stone-500 uppercase tracking-wide mb-2">
-                  What did someone do for you?
+                  what did someone do for you?
                 </label>
                 <textarea
                   value={kindness}
                   onChange={(e) => setKindness(e.target.value)}
                   maxLength={MAX}
                   rows={3}
-                  placeholder="A stranger held the door open even though I was far away..."
+                  placeholder="a stranger held the door open even though i was far away..."
                   required
                   className="w-full border border-stone-200 rounded-xl px-4 py-3 text-stone-900 placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none text-sm leading-relaxed"
                 />
@@ -98,14 +98,14 @@ export default function PostModal() {
 
               <div>
                 <label className="block text-xs font-semibold text-stone-500 uppercase tracking-wide mb-2">
-                  How did it make you feel?
+                  how did it make you feel?
                 </label>
                 <textarea
                   value={feeling}
                   onChange={(e) => setFeeling(e.target.value)}
                   maxLength={MAX}
                   rows={3}
-                  placeholder="Like I wasn't invisible. Like I mattered for just a moment..."
+                  placeholder="like i wasn't invisible. like i mattered for just a moment..."
                   required
                   className="w-full border border-stone-200 rounded-xl px-4 py-3 text-stone-900 placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none text-sm leading-relaxed"
                 />
@@ -119,7 +119,7 @@ export default function PostModal() {
                 disabled={loading || !kindness.trim() || !feeling.trim()}
                 className="bg-amber-500 hover:bg-amber-600 disabled:opacity-40 text-white font-semibold py-3 rounded-xl transition-colors text-sm"
               >
-                {loading ? 'Posting...' : 'Post your moment'}
+                {loading ? 'posting...' : 'post your moment'}
               </button>
             </form>
           </div>

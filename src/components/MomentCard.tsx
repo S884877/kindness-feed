@@ -66,9 +66,8 @@ export default function MomentCard({ moment }: { moment: Moment }) {
   return (
     <article className="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
       <div className="px-5 pt-4 pb-3">
-        {/* top bar */}
-        <div className="flex items-center justify-between mb-3">
-          <span className="text-sm font-semibold text-stone-700">{moment.posted_by}</span>
+        {/* timestamp only — fully anonymous */}
+        <div className="flex items-center justify-end mb-3">
           <span className="text-xs text-stone-400">{timeAgo(moment.created_at)}</span>
         </div>
 
@@ -94,16 +93,23 @@ export default function MomentCard({ moment }: { moment: Moment }) {
           }`}
         >
           <span className="text-base">☀️</span>
-          <span>{warmth > 0 ? warmth : ''} {warmed ? 'Warm' : 'Warmth'}</span>
+          <span>{warmth > 0 ? warmth : ''} {warmed ? 'warm' : 'warmth'}</span>
         </button>
 
-        <button
-          onClick={share}
-          className="flex items-center gap-1.5 text-sm text-stone-400 hover:text-stone-600 transition-colors px-3 py-1.5 rounded-full hover:bg-stone-50"
-        >
-          <ShareIcon />
-          <span>{copied ? 'Copied!' : 'Share'}</span>
-        </button>
+        <div className="relative">
+          <button
+            onClick={share}
+            className="flex items-center gap-1.5 text-sm text-stone-400 hover:text-stone-600 transition-colors px-3 py-1.5 rounded-full hover:bg-stone-50"
+          >
+            <ShareIcon />
+            <span>send to someone you love</span>
+          </button>
+          {copied && (
+            <span className="absolute -top-8 right-0 bg-stone-800 text-white text-xs px-2.5 py-1 rounded-lg whitespace-nowrap">
+              link copied
+            </span>
+          )}
+        </div>
       </div>
     </article>
   )

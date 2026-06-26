@@ -65,7 +65,7 @@ export default function Feed({ initialMoments }: { initialMoments: Moment[] }) {
       )}
       {moments.length === 0 && (
         <p className="text-center text-stone-400 text-sm py-20">
-          no moments yet — be the first to share one.
+          no moments yet — be the first to share one
         </p>
       )}
     </div>
