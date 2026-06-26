@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { saveSession } from '@/lib/session'
 import Link from 'next/link'
 
 export default function LoginPage() {
@@ -17,14 +18,19 @@ export default function LoginPage() {
     setLoading(true)
     setError('')
     const supabase = createClient()
-    const { error: err } = await supabase.auth.signInWithPassword({ email, password })
-    if (err) {
-      setError(err.message.toLowerCase())
+    const { data, error: err } = await supabase
+      .from('accounts')
+      .select('id, email')
+      .eq('email', email.trim().toLowerCase())
+      .eq('password', password)
+      .single()
+    if (err || !data) {
+      setError('incorrect email or password')
       setLoading(false)
       return
     }
+    saveSession({ id: data.id, email: data.email })
     router.push('/')
-    router.refresh()
   }
 
   const fieldCls =

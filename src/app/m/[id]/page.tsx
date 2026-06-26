@@ -49,7 +49,7 @@ export default async function MomentPage({ params }: Props) {
 
   return (
     <div className="py-4">
-      <MomentCard moment={moment} user={null} />
+      <MomentCard moment={moment} session={null} />
       <p className="text-center text-stone-300 text-xs mt-8">
         <a href="/" className="hover:text-stone-500 transition-colors">← back to the feed</a>
       </p>

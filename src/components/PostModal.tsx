@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import type { User } from '@supabase/supabase-js'
+import type { Session } from '@/lib/session'
 
 const MAX_WORDS = 350
 
@@ -31,11 +31,11 @@ function randomUsername() {
 }
 
 export default function PostModal({
-  user,
+  session,
   externalTrigger = 0,
   onAuthRequired,
 }: {
-  user: User | null
+  session: Session | null
   externalTrigger?: number
   onAuthRequired?: () => void
 }) {
@@ -71,7 +71,7 @@ export default function PostModal({
       feeling: feeling.trim(),
       posted_by: randomUsername(),
       location: location.trim() || null,
-      user_id: user?.id ?? null,
+      user_id: session?.id ?? null,
     })
     if (err) {
       setError('something went wrong. try again.')
@@ -90,7 +90,7 @@ export default function PostModal({
   return (
     <>
       <button
-        onClick={() => { if (!user) { onAuthRequired?.(); return } setOpen(true) }}
+        onClick={() => { if (!session) { onAuthRequired?.(); return } setOpen(true) }}
         className="press fixed bottom-20 right-6 z-30 text-white font-semibold text-sm px-6 py-4 rounded-full flex items-center gap-2"
         style={{
           background: 'linear-gradient(135deg, #cf7152, #b85a3e)',
@@ -134,9 +134,8 @@ export default function PostModal({
                 />
                 {(() => {
                   const wc = countWords(kindness)
-                  const atLimit = wc >= MAX_WORDS
                   return (
-                    <p className="text-right text-[11px] mt-1.5" style={{ color: atLimit ? 'var(--accent)' : 'rgba(168,156,143,0.7)' }}>
+                    <p className="text-right text-[11px] mt-1.5" style={{ color: wc >= MAX_WORDS ? 'var(--accent)' : 'rgba(168,156,143,0.7)' }}>
                       {wc} / {MAX_WORDS}
                     </p>
                   )
@@ -155,9 +154,8 @@ export default function PostModal({
                 />
                 {(() => {
                   const wc = countWords(feeling)
-                  const atLimit = wc >= MAX_WORDS
                   return (
-                    <p className="text-right text-[11px] mt-1.5" style={{ color: atLimit ? 'var(--accent)' : 'rgba(168,156,143,0.7)' }}>
+                    <p className="text-right text-[11px] mt-1.5" style={{ color: wc >= MAX_WORDS ? 'var(--accent)' : 'rgba(168,156,143,0.7)' }}>
                       {wc} / {MAX_WORDS}
                     </p>
                   )

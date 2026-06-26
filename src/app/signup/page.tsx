@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { saveSession } from '@/lib/session'
 import Link from 'next/link'
 
 export default function SignupPage() {
@@ -17,14 +18,19 @@ export default function SignupPage() {
     setLoading(true)
     setError('')
     const supabase = createClient()
-    const { error: err } = await supabase.auth.signUp({ email, password })
-    if (err) {
-      setError(err.message.toLowerCase())
+    const { data, error: err } = await supabase
+      .from('accounts')
+      .insert({ email: email.trim().toLowerCase(), password })
+      .select('id, email')
+      .single()
+    if (err || !data) {
+      const msg = err?.message ?? ''
+      setError(msg.includes('unique') ? 'an account with that email already exists' : 'something went wrong. try again.')
       setLoading(false)
       return
     }
+    saveSession({ id: data.id, email: data.email })
     router.push('/')
-    router.refresh()
   }
 
   const fieldCls =
@@ -49,7 +55,6 @@ export default function SignupPage() {
             type="password"
             required
             placeholder="password"
-            minLength={6}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className={fieldCls}
@@ -61,7 +66,7 @@ export default function SignupPage() {
             className="press text-white font-semibold py-3.5 rounded-2xl text-[15px] disabled:opacity-40 mt-1"
             style={{ background: 'linear-gradient(135deg, #cf7152, #b85a3e)' }}
           >
-            {loading ? 'creating account...' : 'sign up'}
+            {loading ? 'creating account...' : 'create account'}
           </button>
         </form>
 

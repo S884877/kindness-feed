@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Moment } from '@/lib/types'
 import { createClient } from '@/lib/supabase/client'
 import { renderMomentImage } from '@/lib/shareImage'
-import type { User } from '@supabase/supabase-js'
+import type { Session } from '@/lib/session'
 
 function relativeTime(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime()
@@ -53,14 +53,14 @@ function ShareIcon() {
 export default function MomentCard({
   moment,
   index = 0,
-  user,
+  session,
   initialSaved = false,
   onSaveToggle,
   onAuthRequired,
 }: {
   moment: Moment
   index?: number
-  user: User | null
+  session: Session | null
   initialSaved?: boolean
   onSaveToggle?: (id: string, saved: boolean) => void
   onAuthRequired?: () => void
@@ -71,10 +71,7 @@ export default function MomentCard({
   const [saveBusy, setSaveBusy] = useState(false)
 
   async function handleSave() {
-    if (!user) {
-      onAuthRequired?.()
-      return
-    }
+    if (!session) { onAuthRequired?.(); return }
     if (saveBusy) return
     setSaveBusy(true)
     const supabase = createClient()
@@ -82,14 +79,14 @@ export default function MomentCard({
       await supabase
         .from('saved_moments')
         .delete()
-        .eq('user_id', user.id)
+        .eq('user_id', session.id)
         .eq('moment_id', moment.id)
       setSaved(false)
       onSaveToggle?.(moment.id, false)
     } else {
       await supabase
         .from('saved_moments')
-        .insert({ user_id: user.id, moment_id: moment.id })
+        .insert({ user_id: session.id, moment_id: moment.id })
       setSaved(true)
       onSaveToggle?.(moment.id, true)
     }
@@ -97,17 +94,13 @@ export default function MomentCard({
   }
 
   async function share() {
-    if (!user) {
-      onAuthRequired?.()
-      return
-    }
+    if (!session) { onAuthRequired?.(); return }
     const url = `${window.location.origin}/m/${moment.id}`
     try {
       await navigator.clipboard.writeText(url)
       setCopied(true)
       setTimeout(() => setCopied(false), 2500)
     } catch {}
-
     setSharing(true)
     try {
       const blob = await renderMomentImage(moment)
@@ -145,22 +138,16 @@ export default function MomentCard({
       </div>
 
       <div className="px-7 py-4 border-t border-[var(--line)] flex items-center justify-between gap-3">
-        {/* hold onto this */}
         <button
           onClick={handleSave}
           disabled={saveBusy}
           className="press flex items-center gap-2 text-[13px] font-medium rounded-full px-4 py-2 transition-colors disabled:opacity-60"
-          style={
-            saved
-              ? { color: 'var(--accent)', backgroundColor: '#f3e7df' }
-              : { color: 'var(--ink-soft)' }
-          }
+          style={saved ? { color: 'var(--accent)', backgroundColor: '#f3e7df' } : { color: 'var(--ink-soft)' }}
         >
           {saved ? <HeartFilled /> : <HeartOutline />}
           <span>hold onto this</span>
         </button>
 
-        {/* pass it on */}
         <div className="relative">
           <button
             onClick={share}
