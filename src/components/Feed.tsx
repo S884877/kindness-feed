@@ -26,6 +26,13 @@ export default function Feed({ initialMoments }: { initialMoments: Moment[] }) {
   const [hasMore, setHasMore] = useState(initialMoments.length === PAGE_SIZE)
   const supabase = createClient()
 
+  // re-sync when the server re-renders (e.g. after posting a new moment via
+  // router.refresh()) so fresh posts appear without a hard reload.
+  useEffect(() => {
+    setMoments(initialMoments)
+    setHasMore(initialMoments.length === PAGE_SIZE)
+  }, [initialMoments])
+
   const loadMore = useCallback(async () => {
     if (loading || !hasMore) return
     setLoading(true)
