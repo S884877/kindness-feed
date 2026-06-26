@@ -35,7 +35,7 @@ export default function RootLayout({
     <html lang="en" className={`${fraunces.variable} ${inter.variable}`}>
       <body>
         <NavBar />
-        <main className="pt-24 pb-28">
+        <main className="pt-24 pb-36">
           <div className="feed-frame">
             {children}
           </div>

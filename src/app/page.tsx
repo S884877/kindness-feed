@@ -1,6 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
-import Feed from '@/components/Feed'
-import PostModal from '@/components/PostModal'
+import WallClient from '@/components/WallClient'
 import { Moment } from '@/lib/types'
 
 const PAGE_SIZE = 10
@@ -10,16 +9,11 @@ export default async function Home() {
 
   const { data } = await supabase
     .from('moments')
-    .select('id, kindness, feeling, location, first_name, mood, me_too_count, created_at')
+    .select('id, kindness, feeling, location, mood, created_at, posted_by, user_id')
     .order('created_at', { ascending: false })
     .range(0, PAGE_SIZE - 1)
 
   const moments: Moment[] = (data ?? []) as Moment[]
 
-  return (
-    <>
-      <Feed initialMoments={moments} />
-      <PostModal />
-    </>
-  )
+  return <WallClient initialMoments={moments} />
 }

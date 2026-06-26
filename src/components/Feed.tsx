@@ -4,10 +4,11 @@ import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import MomentCard from './MomentCard'
 import { Moment } from '@/lib/types'
+import type { User } from '@supabase/supabase-js'
 
 const PAGE_SIZE = 10
 
-const COLUMNS = 'id, kindness, feeling, location, first_name, mood, me_too_count, created_at'
+const COLUMNS = 'id, kindness, feeling, location, mood, created_at, posted_by, user_id'
 
 async function fetchMoments(supabase: ReturnType<typeof createClient>, from: number) {
   const { data, error } = await supabase
@@ -20,14 +21,22 @@ async function fetchMoments(supabase: ReturnType<typeof createClient>, from: num
   return data as Moment[]
 }
 
-export default function Feed({ initialMoments }: { initialMoments: Moment[] }) {
+export default function Feed({
+  initialMoments,
+  user,
+  savedIds,
+  onSaveToggle,
+}: {
+  initialMoments: Moment[]
+  user: User | null
+  savedIds: Set<string>
+  onSaveToggle: (id: string, saved: boolean) => void
+}) {
   const [moments, setMoments] = useState<Moment[]>(initialMoments)
   const [loading, setLoading] = useState(false)
   const [hasMore, setHasMore] = useState(initialMoments.length === PAGE_SIZE)
   const supabase = createClient()
 
-  // re-sync when the server re-renders (e.g. after posting a new moment via
-  // router.refresh()) so fresh posts appear without a hard reload.
   useEffect(() => {
     setMoments(initialMoments)
     setHasMore(initialMoments.length === PAGE_SIZE)
@@ -56,7 +65,14 @@ export default function Feed({ initialMoments }: { initialMoments: Moment[] }) {
     <div>
       <div className="flex flex-col gap-5">
         {moments.map((m, i) => (
-          <MomentCard key={m.id} moment={m} index={i} />
+          <MomentCard
+            key={m.id}
+            moment={m}
+            index={i}
+            user={user}
+            initialSaved={savedIds.has(m.id)}
+            onSaveToggle={onSaveToggle}
+          />
         ))}
       </div>
       <div id="feed-sentinel" className="h-4 mt-4" />

@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { MOOD_ORDER, MOODS, Mood } from '@/lib/moods'
+import type { User } from '@supabase/supabase-js'
 
 const MAX = 280
 
@@ -12,26 +12,31 @@ function randomUsername() {
   return `kinduser_${digits}`
 }
 
-export default function PostModal() {
+export default function PostModal({
+  user,
+  externalTrigger = 0,
+}: {
+  user: User | null
+  externalTrigger?: number
+}) {
   const [open, setOpen] = useState(false)
   const [kindness, setKindness] = useState('')
   const [feeling, setFeeling] = useState('')
   const [location, setLocation] = useState('')
-  const [firstName, setFirstName] = useState('')
-  const [mood, setMood] = useState<Mood | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
 
-  function openModal() { setOpen(true) }
+  useEffect(() => {
+    if (externalTrigger > 0) setOpen(true)
+  }, [externalTrigger])
+
   function closeModal() {
     if (loading) return
     setOpen(false)
     setKindness('')
     setFeeling('')
     setLocation('')
-    setFirstName('')
-    setMood(null)
     setError('')
   }
 
@@ -46,8 +51,7 @@ export default function PostModal() {
       feeling: feeling.trim(),
       posted_by: randomUsername(),
       location: location.trim() || null,
-      first_name: firstName.trim() || null,
-      mood: mood,
+      user_id: user?.id ?? null,
     })
     if (err) {
       setError('something went wrong. try again.')
@@ -65,10 +69,9 @@ export default function PostModal() {
 
   return (
     <>
-      {/* Floating button */}
       <button
-        onClick={openModal}
-        className="press fixed bottom-6 right-6 z-30 text-white font-semibold text-sm px-6 py-4 rounded-full flex items-center gap-2"
+        onClick={() => setOpen(true)}
+        className="press fixed bottom-20 right-6 z-30 text-white font-semibold text-sm px-6 py-4 rounded-full flex items-center gap-2"
         style={{
           background: 'linear-gradient(135deg, #cf7152, #b85a3e)',
           boxShadow: '0 8px 24px -6px rgba(184, 90, 62, 0.55), 0 2px 6px rgba(0,0,0,0.08)',
@@ -78,13 +81,11 @@ export default function PostModal() {
         share a moment
       </button>
 
-      {/* Backdrop */}
       {open && (
         <div
           className="backdrop-in fixed inset-0 z-40 bg-[#2c2620]/35 backdrop-blur-md flex items-center justify-center px-4 py-8 overflow-y-auto"
           onClick={(e) => { if (e.target === e.currentTarget) closeModal() }}
         >
-          {/* Modal */}
           <div
             className="sheet-in bg-[#fffdf9] rounded-[28px] w-full max-w-lg p-7 my-auto"
             style={{ boxShadow: '0 30px 80px -20px rgba(60,45,30,0.4), 0 8px 24px rgba(60,45,30,0.12)' }}
@@ -102,7 +103,7 @@ export default function PostModal() {
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-6">
               <div>
-                <label className={labelCls}>what did someone do for you?</label>
+                <label className={labelCls}>what act of kindness did someone show you?</label>
                 <textarea
                   value={kindness}
                   onChange={(e) => setKindness(e.target.value)}
@@ -129,55 +130,16 @@ export default function PostModal() {
                 <p className="text-right text-[11px] text-[var(--ink-faint)]/70 mt-1.5">{feeling.length}/{MAX}</p>
               </div>
 
-              {/* mood picker */}
               <div>
-                <label className={labelCls}>how would you name that feeling?</label>
-                <div className="flex flex-wrap gap-2.5">
-                  {MOOD_ORDER.map((m) => {
-                    const active = mood === m
-                    const cfg = MOODS[m]
-                    return (
-                      <button
-                        key={m}
-                        type="button"
-                        onClick={() => setMood(active ? null : m)}
-                        className="press text-sm font-medium px-4 py-2 rounded-full transition-all lowercase"
-                        style={
-                          active
-                            ? { backgroundColor: cfg.chipBg, color: cfg.chipText, boxShadow: `0 0 0 2px ${cfg.chipText}33` }
-                            : { backgroundColor: '#f4ece2', color: 'var(--ink-soft)' }
-                        }
-                      >
-                        {cfg.label}
-                      </button>
-                    )
-                  })}
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className={labelCls}>your first name</label>
-                  <input
-                    type="text"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    maxLength={40}
-                    placeholder="your first name (optional)"
-                    className={fieldCls}
-                  />
-                </div>
-                <div>
-                  <label className={labelCls}>where from?</label>
-                  <input
-                    type="text"
-                    value={location}
-                    onChange={(e) => setLocation(e.target.value)}
-                    maxLength={100}
-                    placeholder="your city or town"
-                    className={fieldCls}
-                  />
-                </div>
+                <label className={labelCls}>where from? (optional)</label>
+                <input
+                  type="text"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  maxLength={100}
+                  placeholder="your city or town"
+                  className={fieldCls}
+                />
               </div>
 
               {error && <p className="text-[var(--accent)] text-sm">{error}</p>}

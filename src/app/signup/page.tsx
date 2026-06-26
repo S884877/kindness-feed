@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 
-export default function LoginPage() {
+export default function SignupPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -17,7 +17,7 @@ export default function LoginPage() {
     setLoading(true)
     setError('')
     const supabase = createClient()
-    const { error: err } = await supabase.auth.signInWithPassword({ email, password })
+    const { error: err } = await supabase.auth.signUp({ email, password })
     if (err) {
       setError(err.message.toLowerCase())
       setLoading(false)
@@ -33,8 +33,8 @@ export default function LoginPage() {
   return (
     <div className="min-h-[60vh] flex items-center justify-center px-4 py-12">
       <div className="w-full max-w-sm">
-        <h1 className="font-serif text-3xl text-[var(--ink)] mb-2">welcome back</h1>
-        <p className="text-[var(--ink-faint)] text-sm mb-8">sign in to save and share moments</p>
+        <h1 className="font-serif text-3xl text-[var(--ink)] mb-2">create an account</h1>
+        <p className="text-[var(--ink-faint)] text-sm mb-8">save moments that move you</p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <input
@@ -49,6 +49,7 @@ export default function LoginPage() {
             type="password"
             required
             placeholder="password"
+            minLength={6}
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             className={fieldCls}
@@ -60,14 +61,14 @@ export default function LoginPage() {
             className="press text-white font-semibold py-3.5 rounded-2xl text-[15px] disabled:opacity-40 mt-1"
             style={{ background: 'linear-gradient(135deg, #cf7152, #b85a3e)' }}
           >
-            {loading ? 'signing in...' : 'sign in'}
+            {loading ? 'creating account...' : 'sign up'}
           </button>
         </form>
 
         <p className="text-center text-[var(--ink-faint)] text-sm mt-6">
-          don&apos;t have an account?{' '}
-          <Link href="/signup" className="text-[var(--accent)] hover:underline">
-            sign up
+          already have an account?{' '}
+          <Link href="/login" className="text-[var(--accent)] hover:underline">
+            sign in
           </Link>
         </p>
       </div>

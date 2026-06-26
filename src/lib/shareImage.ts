@@ -1,7 +1,6 @@
 import { Moment } from './types'
 import { MOODS, isMood } from './moods'
 
-// Wrap text to a max width, returning lines.
 function wrapText(
   ctx: CanvasRenderingContext2D,
   text: string,
@@ -36,17 +35,12 @@ function roundRect(
   ctx.closePath()
 }
 
-/**
- * Render a gorgeous shareable image of a moment to a PNG blob.
- * 1080x1350 (4:5) — ideal for whatsapp / instagram sharing.
- */
 export async function renderMomentImage(moment: Moment): Promise<Blob> {
   const W = 1080
   const H = 1350
   const PAD = 110
   const innerW = W - PAD * 2
 
-  // Make sure fonts are ready before drawing to canvas.
   try {
     await Promise.all([
       (document as any).fonts.load('600 64px Fraunces'),
@@ -63,14 +57,12 @@ export async function renderMomentImage(moment: Moment): Promise<Blob> {
   const ctx = canvas.getContext('2d')!
   ctx.scale(dpr, dpr)
 
-  // warm cream gradient background
   const grad = ctx.createLinearGradient(0, 0, 0, H)
   grad.addColorStop(0, '#f6efe4')
   grad.addColorStop(1, '#efe4d4')
   ctx.fillStyle = grad
   ctx.fillRect(0, 0, W, H)
 
-  // soft inner card
   ctx.save()
   ctx.shadowColor = 'rgba(80, 60, 40, 0.12)'
   ctx.shadowBlur = 60
@@ -82,15 +74,13 @@ export async function renderMomentImage(moment: Moment): Promise<Blob> {
 
   let y = 190
 
-  // opening quotation mark flourish
   ctx.fillStyle = 'rgba(194, 103, 76, 0.22)'
   ctx.font = '600 150px Fraunces, Georgia, serif'
   ctx.textBaseline = 'alphabetic'
-  ctx.fillText('“', PAD - 8, y + 40)
+  ctx.fillText('"', PAD - 8, y + 40)
 
   y += 90
 
-  // mood chip
   if (isMood(moment.mood)) {
     const m = MOODS[moment.mood]
     ctx.font = '600 26px Inter, sans-serif'
@@ -109,7 +99,6 @@ export async function renderMomentImage(moment: Moment): Promise<Blob> {
     y += 16
   }
 
-  // kindness — serif, large
   ctx.fillStyle = '#2c2620'
   ctx.font = '600 60px Fraunces, Georgia, serif'
   ctx.textBaseline = 'alphabetic'
@@ -122,7 +111,6 @@ export async function renderMomentImage(moment: Moment): Promise<Blob> {
 
   y += 34
 
-  // feeling — serif italic, muted
   ctx.fillStyle = '#7a6c5d'
   ctx.font = 'italic 400 42px Fraunces, Georgia, serif'
   const feelingLines = wrapText(ctx, moment.feeling, innerW)
@@ -132,13 +120,6 @@ export async function renderMomentImage(moment: Moment): Promise<Blob> {
     y += fLineH
   }
 
-  // attribution
-  y += 26
-  ctx.fillStyle = '#a89c8f'
-  ctx.font = '500 28px Inter, sans-serif'
-  ctx.fillText(attribution(moment), PAD, y)
-
-  // branding footer
   ctx.textAlign = 'center'
   ctx.fillStyle = 'rgba(194, 103, 76, 0.16)'
   ctx.fillRect(W / 2 - 30, H - 196, 60, 3)
@@ -156,13 +137,4 @@ export async function renderMomentImage(moment: Moment): Promise<Blob> {
       'image/png'
     )
   })
-}
-
-export function attribution(moment: Moment): string {
-  const name = moment.first_name?.trim()
-  const loc = moment.location?.trim()
-  if (name && loc) return `posted by ${name} from ${loc}`
-  if (name) return `posted by ${name}`
-  if (loc) return `posted by someone from ${loc}`
-  return 'posted by someone'
 }

@@ -39,17 +39,17 @@ export default async function MomentPage({ params }: Props) {
 
   const { data } = await supabase
     .from('moments')
-    .select('id, kindness, feeling, location, first_name, mood, me_too_count, created_at')
+    .select('id, kindness, feeling, location, mood, created_at, posted_by, user_id')
     .eq('id', id)
     .single()
 
   if (!data) notFound()
 
-  const moment: Moment = data as Moment
+  const moment = data as unknown as Moment
 
   return (
     <div className="py-4">
-      <MomentCard moment={moment} />
+      <MomentCard moment={moment} user={null} />
       <p className="text-center text-stone-300 text-xs mt-8">
         <a href="/" className="hover:text-stone-500 transition-colors">← back to the feed</a>
       </p>

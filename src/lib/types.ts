@@ -7,16 +7,13 @@ export type Moment = {
   kindness: string
   feeling: string
   location: string | null
-  first_name: string | null
   mood: Mood | null
-  me_too_count: number
   created_at: string
 }
 
-export type Reaction = {
+export type SavedMoment = {
   id: string
-  moment_id: string
   user_id: string
-  type: 'warmth' | 'heart'
+  moment_id: string
   created_at: string
 }
