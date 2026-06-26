@@ -2,23 +2,19 @@
 
 import { useState } from 'react'
 import { Moment } from '@/lib/types'
-import { createClient } from '@/lib/supabase/client'
 
-function timeAgo(dateStr: string) {
-  const diff = Date.now() - new Date(dateStr).getTime()
-  const mins = Math.floor(diff / 60000)
-  if (mins < 1) return 'just now'
-  if (mins < 60) return `${mins} ${mins === 1 ? 'minute' : 'minutes'} ago`
-  const hrs = Math.floor(mins / 60)
-  if (hrs < 24) return `${hrs} ${hrs === 1 ? 'hour' : 'hours'} ago`
-  const days = Math.floor(hrs / 24)
-  if (days < 7) return `${days} ${days === 1 ? 'day' : 'days'} ago`
-  return new Date(dateStr).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+function formatDate(dateStr: string) {
+  const d = new Date(dateStr)
+  const day = d.getDate()
+  const month = d.toLocaleString('en-GB', { month: 'short' }).toLowerCase()
+  const year = d.getFullYear()
+  const time = d.toLocaleString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true }).toLowerCase()
+  return `${day} ${month} ${year}, ${time}`
 }
 
 function ShareIcon() {
   return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
       <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/>
       <polyline points="16 6 12 2 8 6"/>
       <line x1="12" y1="2" x2="12" y2="15"/>
@@ -27,48 +23,30 @@ function ShareIcon() {
 }
 
 export default function MomentCard({ moment }: { moment: Moment }) {
-  const [warmth, setWarmth] = useState(moment.warmth_count ?? 0)
-  const [warmed, setWarmed] = useState(false)
-  const [loading, setLoading] = useState(false)
   const [copied, setCopied] = useState(false)
-
-  async function toggleWarmth() {
-    if (loading) return
-    setLoading(true)
-    const supabase = createClient()
-    if (warmed) {
-      setWarmth((n) => n - 1)
-      setWarmed(false)
-    } else {
-      setWarmth((n) => n + 1)
-      setWarmed(true)
-      // optimistic — no auth needed, just insert anonymously
-      await supabase.from('reactions').insert({
-        moment_id: moment.id,
-        user_id: '00000000-0000-0000-0000-000000000001',
-        type: 'warmth',
-      })
-    }
-    setLoading(false)
-  }
 
   async function share() {
     const url = `${window.location.origin}/m/${moment.id}`
     try {
       await navigator.clipboard.writeText(url)
       setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      setTimeout(() => setCopied(false), 2500)
     } catch {
       window.open(url, '_blank')
     }
   }
 
   return (
-    <article className="bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
+    <article className="moment-card bg-white rounded-xl shadow-sm border border-stone-200 overflow-hidden">
       <div className="px-5 pt-4 pb-3">
-        {/* timestamp only — fully anonymous */}
-        <div className="flex items-center justify-end mb-3">
-          <span className="text-xs text-stone-400">{timeAgo(moment.created_at)}</span>
+        {/* meta row: location + date */}
+        <div className="flex items-start justify-between gap-4 mb-3">
+          <div>
+            {moment.location && (
+              <span className="text-xs text-stone-400">{moment.location}</span>
+            )}
+          </div>
+          <span className="text-xs text-stone-400 shrink-0">{formatDate(moment.created_at)}</span>
         </div>
 
         {/* kindness */}
@@ -83,29 +61,17 @@ export default function MomentCard({ moment }: { moment: Moment }) {
       </div>
 
       {/* bottom bar */}
-      <div className="px-5 py-3 border-t border-stone-100 flex items-center justify-between">
-        <button
-          onClick={toggleWarmth}
-          className={`flex items-center gap-1.5 text-sm font-medium transition-colors px-3 py-1.5 rounded-full ${
-            warmed
-              ? 'bg-amber-50 text-amber-600'
-              : 'text-stone-400 hover:bg-stone-50 hover:text-amber-500'
-          }`}
-        >
-          <span className="text-base">☀️</span>
-          <span>{warmth > 0 ? warmth : ''} {warmed ? 'warm' : 'warmth'}</span>
-        </button>
-
+      <div className="px-5 py-3 border-t border-stone-100 flex items-center justify-end">
         <div className="relative">
           <button
             onClick={share}
-            className="flex items-center gap-1.5 text-sm text-stone-400 hover:text-stone-600 transition-colors px-3 py-1.5 rounded-full hover:bg-stone-50"
+            className="flex items-center gap-1.5 text-sm text-stone-400 hover:text-stone-700 transition-colors py-1"
           >
             <ShareIcon />
             <span>send to someone you love</span>
           </button>
           {copied && (
-            <span className="absolute -top-8 right-0 bg-stone-800 text-white text-xs px-2.5 py-1 rounded-lg whitespace-nowrap">
+            <span className="absolute -top-9 right-0 bg-stone-800 text-white text-xs px-3 py-1.5 rounded-lg whitespace-nowrap shadow-md">
               link copied
             </span>
           )}

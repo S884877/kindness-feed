@@ -21,8 +21,10 @@ export default function RootLayout({
     <html lang="en">
       <body>
         <NavBar />
-        <main className="max-w-[680px] mx-auto px-4 pt-20 pb-24">
-          {children}
+        <main className="pt-20 pb-24">
+          <div className="feed-frame">
+            {children}
+          </div>
         </main>
       </body>
     </html>

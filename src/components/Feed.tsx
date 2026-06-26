@@ -10,16 +10,12 @@ const PAGE_SIZE = 10
 async function fetchMoments(supabase: ReturnType<typeof createClient>, from: number) {
   const { data, error } = await supabase
     .from('moments')
-    .select('*, reactions(type)')
+    .select('id, kindness, feeling, location, created_at')
     .order('created_at', { ascending: false })
     .range(from, from + PAGE_SIZE - 1)
 
   if (error || !data) return []
-
-  return data.map((m: any) => ({
-    ...m,
-    warmth_count: (m.reactions ?? []).filter((r: any) => r.type === 'warmth').length,
-  })) as Moment[]
+  return data as Moment[]
 }
 
 export default function Feed({ initialMoments }: { initialMoments: Moment[] }) {

@@ -10,14 +10,11 @@ export default async function Home() {
 
   const { data } = await supabase
     .from('moments')
-    .select('*, reactions(type)')
+    .select('id, kindness, feeling, location, created_at')
     .order('created_at', { ascending: false })
     .range(0, PAGE_SIZE - 1)
 
-  const moments: Moment[] = (data ?? []).map((m: any) => ({
-    ...m,
-    warmth_count: (m.reactions ?? []).filter((r: any) => r.type === 'warmth').length,
-  }))
+  const moments: Moment[] = (data ?? []) as Moment[]
 
   return (
     <>

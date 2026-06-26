@@ -4,8 +4,8 @@ export type Moment = {
   posted_by: string
   kindness: string
   feeling: string
+  location: string | null
   created_at: string
-  warmth_count?: number
 }
 
 export type Reaction = {

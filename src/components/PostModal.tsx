@@ -15,6 +15,7 @@ export default function PostModal() {
   const [open, setOpen] = useState(false)
   const [kindness, setKindness] = useState('')
   const [feeling, setFeeling] = useState('')
+  const [location, setLocation] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
@@ -25,6 +26,7 @@ export default function PostModal() {
     setOpen(false)
     setKindness('')
     setFeeling('')
+    setLocation('')
     setError('')
   }
 
@@ -38,6 +40,7 @@ export default function PostModal() {
       kindness: kindness.trim(),
       feeling: feeling.trim(),
       posted_by: randomUsername(),
+      location: location.trim() || null,
     })
     if (err) {
       setError('something went wrong. try again.')
@@ -110,6 +113,20 @@ export default function PostModal() {
                   className="w-full border border-stone-200 rounded-xl px-4 py-3 text-stone-900 placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none text-sm leading-relaxed"
                 />
                 <p className="text-right text-xs text-stone-300 mt-1">{feeling.length}/{MAX}</p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-stone-500 uppercase tracking-wide mb-2">
+                  where are you from? (optional)
+                </label>
+                <input
+                  type="text"
+                  value={location}
+                  onChange={(e) => setLocation(e.target.value)}
+                  maxLength={100}
+                  placeholder="your city or town"
+                  className="w-full border border-stone-200 rounded-xl px-4 py-3 text-stone-900 placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm"
+                />
               </div>
 
               {error && <p className="text-red-500 text-sm">{error}</p>}

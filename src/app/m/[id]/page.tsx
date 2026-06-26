@@ -39,16 +39,13 @@ export default async function MomentPage({ params }: Props) {
 
   const { data } = await supabase
     .from('moments')
-    .select('*, reactions(type)')
+    .select('id, kindness, feeling, location, created_at')
     .eq('id', id)
     .single()
 
   if (!data) notFound()
 
-  const moment: Moment = {
-    ...data,
-    warmth_count: (data.reactions ?? []).filter((r: any) => r.type === 'warmth').length,
-  }
+  const moment: Moment = data as Moment
 
   return (
     <div className="py-4">
