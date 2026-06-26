@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import Feed from './Feed'
@@ -36,9 +36,7 @@ export default function WallClient({ initialMoments }: { initialMoments: Moment[
   const [nudgeOpen, setNudgeOpen] = useState(false)
   const [nudgePermanentDismiss, setNudgePermanentDismiss] = useState(false)
   const nudgePromptIndex = useRef(0)
-  const nudgeEligible = useRef(false)
-  const nudgeLastOverlayDismiss = useRef<number>(0)
-  const nudgeReshowTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const idleTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const supabase = createClient()
 
@@ -90,74 +88,49 @@ export default function WallClient({ initialMoments }: { initialMoments: Moment[
       })
   }, [view, user])
 
-  // --- nudge: exit intent ---
-  const openNudge = useCallback(() => {
-    if (nudgePermanentDismiss || nudgeOpen) return
-    setNudgeOpen(true)
-  }, [nudgePermanentDismiss, nudgeOpen])
-
-  // 10-second eligibility gate
+  // --- nudge: idle trigger ---
+  // Starts/resets a 10s idle timer on every user activity event.
+  // Fires only when the user has been completely idle for 10 continuous seconds.
   useEffect(() => {
-    if (view !== 'wall' || nudgePermanentDismiss) return
-    nudgeEligible.current = false
-    const t = setTimeout(() => { nudgeEligible.current = true }, 10000)
-    return () => clearTimeout(t)
-  }, [view, nudgePermanentDismiss])
+    if (view !== 'wall' || nudgePermanentDismiss || nudgeOpen) return
 
-  // desktop: exit intent mouse
-  useEffect(() => {
-    if (nudgePermanentDismiss) return
-
-    function onMouseMove(e: MouseEvent) {
-      if (!nudgeEligible.current || nudgeOpen) return
-      if (e.clientY < 50) openNudge()
+    function scheduleNudge() {
+      if (idleTimer.current) clearTimeout(idleTimer.current)
+      idleTimer.current = setTimeout(() => {
+        setNudgeOpen(true)
+      }, 10000)
     }
 
-    window.addEventListener('mousemove', onMouseMove)
-    return () => window.removeEventListener('mousemove', onMouseMove)
-  }, [nudgePermanentDismiss, nudgeOpen, openNudge])
-
-  // mobile: scroll inactivity (10s no scroll after eligible)
-  useEffect(() => {
-    if (nudgePermanentDismiss) return
-
-    let inactivityTimer: ReturnType<typeof setTimeout> | null = null
-
-    function resetTimer() {
-      if (inactivityTimer) clearTimeout(inactivityTimer)
-      if (!nudgeEligible.current || nudgeOpen) return
-      inactivityTimer = setTimeout(() => openNudge(), 10000)
+    function resetIdle() {
+      scheduleNudge()
     }
 
-    window.addEventListener('scroll', resetTimer, { passive: true })
+    const events = ['scroll', 'mousemove', 'mousedown', 'touchstart', 'keydown', 'click']
+    events.forEach(e => window.addEventListener(e, resetIdle, { passive: true }))
+    scheduleNudge() // start the timer immediately on mount
+
     return () => {
-      window.removeEventListener('scroll', resetTimer)
-      if (inactivityTimer) clearTimeout(inactivityTimer)
+      events.forEach(e => window.removeEventListener(e, resetIdle))
+      if (idleTimer.current) clearTimeout(idleTimer.current)
     }
-  }, [nudgePermanentDismiss, nudgeOpen, openNudge])
+  }, [view, nudgePermanentDismiss, nudgeOpen])
 
   function handleNudgeOverlayDismiss() {
-    setNudgeOpen(false)
-    nudgeLastOverlayDismiss.current = Date.now()
-    // advance to next prompt for re-show
+    // dismiss once — idle timer restarts naturally via the effect re-running
     nudgePromptIndex.current = (nudgePromptIndex.current + 1) % NUDGE_PROMPTS.length
-    // re-trigger after 2 minutes
-    if (nudgeReshowTimer.current) clearTimeout(nudgeReshowTimer.current)
-    nudgeReshowTimer.current = setTimeout(() => {
-      if (!nudgePermanentDismiss) openNudge()
-    }, 120000)
+    setNudgeOpen(false)
   }
 
   function handleNudgeNotNow() {
-    setNudgeOpen(false)
     setNudgePermanentDismiss(true)
-    if (nudgeReshowTimer.current) clearTimeout(nudgeReshowTimer.current)
+    setNudgeOpen(false)
+    if (idleTimer.current) clearTimeout(idleTimer.current)
   }
 
   function handleNudgeShare() {
-    setNudgeOpen(false)
     setNudgePermanentDismiss(true)
-    if (nudgeReshowTimer.current) clearTimeout(nudgeReshowTimer.current)
+    setNudgeOpen(false)
+    if (idleTimer.current) clearTimeout(idleTimer.current)
     setPostTrigger(t => t + 1)
   }
 
