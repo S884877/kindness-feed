@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import Feed from './Feed'
 import PostModal from './PostModal'
@@ -12,11 +13,10 @@ import type { User } from '@supabase/supabase-js'
 type View = 'mine' | 'wall' | 'kept'
 
 const NUDGE_PROMPTS = [
-  "what's an act of kindness from someone that stayed with you? share the moment",
-  "did someone do something small that meant everything? tell us",
-  "when did a stranger's kindness catch you off guard? we'd love to hear it",
-  "is there a moment of kindness you still think about? share it here",
-  "someone out there needs to hear what you experienced. share your moment",
+  "you've been reading for a while. something must have stayed with you.",
+  "someone was kind to you once. this is a good place to leave that.",
+  "the person who needs to read your moment is already here.",
+  "kindness deserves to travel. share yours.",
 ]
 
 const COLUMNS = 'id, kindness, feeling, location, mood, created_at, posted_by, user_id'
@@ -27,11 +27,19 @@ export default function WallClient({ initialMoments }: { initialMoments: Moment[
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
   const [mineMoments, setMineMoments] = useState<Moment[]>([])
   const [keptMoments, setKeptMoments] = useState<Moment[]>([])
-  const [nudgeDismissed, setNudgeDismissed] = useState(false)
-  const [showNudge, setShowNudge] = useState(false)
-  const [nudgeExpanded, setNudgeExpanded] = useState(false)
   const [postTrigger, setPostTrigger] = useState(0)
-  const nudgePrompt = useRef(NUDGE_PROMPTS[Math.floor(Math.random() * NUDGE_PROMPTS.length)])
+
+  // auth gate
+  const [showAuthGate, setShowAuthGate] = useState(false)
+
+  // nudge modal
+  const [nudgeOpen, setNudgeOpen] = useState(false)
+  const [nudgePermanentDismiss, setNudgePermanentDismiss] = useState(false)
+  const nudgePromptIndex = useRef(0)
+  const nudgeEligible = useRef(false)
+  const nudgeLastOverlayDismiss = useRef<number>(0)
+  const nudgeReshowTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   const supabase = createClient()
 
   // auth state
@@ -55,13 +63,6 @@ export default function WallClient({ initialMoments }: { initialMoments: Moment[
       })
   }, [user])
 
-  // 10-second nudge on wall view
-  useEffect(() => {
-    if (view !== 'wall' || nudgeDismissed) return
-    const t = setTimeout(() => setShowNudge(true), 10000)
-    return () => clearTimeout(t)
-  }, [view, nudgeDismissed])
-
   // load mine moments
   useEffect(() => {
     if (view !== 'mine' || !user) return
@@ -83,13 +84,82 @@ export default function WallClient({ initialMoments }: { initialMoments: Moment[
       .order('created_at', { ascending: false })
       .then(({ data }) => {
         if (data) {
-          const moments = data
-            .map((r: any) => r.moments)
-            .filter(Boolean) as Moment[]
+          const moments = data.map((r: any) => r.moments).filter(Boolean) as Moment[]
           setKeptMoments(moments)
         }
       })
   }, [view, user])
+
+  // --- nudge: exit intent ---
+  const openNudge = useCallback(() => {
+    if (nudgePermanentDismiss || nudgeOpen) return
+    setNudgeOpen(true)
+  }, [nudgePermanentDismiss, nudgeOpen])
+
+  // 10-second eligibility gate
+  useEffect(() => {
+    if (view !== 'wall' || nudgePermanentDismiss) return
+    nudgeEligible.current = false
+    const t = setTimeout(() => { nudgeEligible.current = true }, 10000)
+    return () => clearTimeout(t)
+  }, [view, nudgePermanentDismiss])
+
+  // desktop: exit intent mouse
+  useEffect(() => {
+    if (nudgePermanentDismiss) return
+
+    function onMouseMove(e: MouseEvent) {
+      if (!nudgeEligible.current || nudgeOpen) return
+      if (e.clientY < 50) openNudge()
+    }
+
+    window.addEventListener('mousemove', onMouseMove)
+    return () => window.removeEventListener('mousemove', onMouseMove)
+  }, [nudgePermanentDismiss, nudgeOpen, openNudge])
+
+  // mobile: scroll inactivity (10s no scroll after eligible)
+  useEffect(() => {
+    if (nudgePermanentDismiss) return
+
+    let inactivityTimer: ReturnType<typeof setTimeout> | null = null
+
+    function resetTimer() {
+      if (inactivityTimer) clearTimeout(inactivityTimer)
+      if (!nudgeEligible.current || nudgeOpen) return
+      inactivityTimer = setTimeout(() => openNudge(), 10000)
+    }
+
+    window.addEventListener('scroll', resetTimer, { passive: true })
+    return () => {
+      window.removeEventListener('scroll', resetTimer)
+      if (inactivityTimer) clearTimeout(inactivityTimer)
+    }
+  }, [nudgePermanentDismiss, nudgeOpen, openNudge])
+
+  function handleNudgeOverlayDismiss() {
+    setNudgeOpen(false)
+    nudgeLastOverlayDismiss.current = Date.now()
+    // advance to next prompt for re-show
+    nudgePromptIndex.current = (nudgePromptIndex.current + 1) % NUDGE_PROMPTS.length
+    // re-trigger after 2 minutes
+    if (nudgeReshowTimer.current) clearTimeout(nudgeReshowTimer.current)
+    nudgeReshowTimer.current = setTimeout(() => {
+      if (!nudgePermanentDismiss) openNudge()
+    }, 120000)
+  }
+
+  function handleNudgeNotNow() {
+    setNudgeOpen(false)
+    setNudgePermanentDismiss(true)
+    if (nudgeReshowTimer.current) clearTimeout(nudgeReshowTimer.current)
+  }
+
+  function handleNudgeShare() {
+    setNudgeOpen(false)
+    setNudgePermanentDismiss(true)
+    if (nudgeReshowTimer.current) clearTimeout(nudgeReshowTimer.current)
+    setPostTrigger(t => t + 1)
+  }
 
   function handleSaveToggle(momentId: string, isSaved: boolean) {
     setSavedIds(prev => {
@@ -103,15 +173,16 @@ export default function WallClient({ initialMoments }: { initialMoments: Moment[
     }
   }
 
-  function dismissNudge() {
-    setNudgeDismissed(true)
-    setShowNudge(false)
-    setNudgeExpanded(false)
+  function handleViewChange(v: View) {
+    if ((v === 'mine' || v === 'kept') && !user) {
+      setShowAuthGate(true)
+      return
+    }
+    setView(v)
   }
 
-  function nudgeShare() {
-    setPostTrigger(t => t + 1)
-    dismissNudge()
+  function handleAuthRequired() {
+    setShowAuthGate(true)
   }
 
   return (
@@ -122,6 +193,7 @@ export default function WallClient({ initialMoments }: { initialMoments: Moment[
           user={user}
           savedIds={savedIds}
           onSaveToggle={handleSaveToggle}
+          onAuthRequired={handleAuthRequired}
         />
       )}
 
@@ -131,7 +203,8 @@ export default function WallClient({ initialMoments }: { initialMoments: Moment[
           user={user}
           savedIds={savedIds}
           onSaveToggle={handleSaveToggle}
-          emptyMessage={user ? "you haven't posted anything yet" : "sign in to see your moments"}
+          onAuthRequired={handleAuthRequired}
+          emptyMessage="you haven't posted anything yet"
         />
       )}
 
@@ -141,55 +214,76 @@ export default function WallClient({ initialMoments }: { initialMoments: Moment[
           user={user}
           savedIds={savedIds}
           onSaveToggle={handleSaveToggle}
-          emptyMessage={user ? "nothing saved yet" : "sign in to save moments"}
+          onAuthRequired={handleAuthRequired}
+          emptyMessage="nothing saved yet"
         />
       )}
 
-      {showNudge && !nudgeDismissed && (
-        <div className="fixed bottom-[80px] left-5 z-30">
-          {nudgeExpanded ? (
-            <div
-              className="nudge-in rounded-2xl p-4 w-64"
-              style={{
-                background: 'var(--card)',
-                boxShadow: '0 8px 32px -8px rgba(60,45,30,0.22), 0 2px 8px rgba(60,45,30,0.08)',
-                border: '1px solid var(--line)',
-              }}
+      {/* auth gate */}
+      {showAuthGate && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center px-6"
+          style={{ background: 'rgba(44,38,32,0.25)', backdropFilter: 'blur(4px)' }}
+          onClick={() => setShowAuthGate(false)}
+        >
+          <div
+            className="bg-[#fffdf9] rounded-2xl px-8 py-7 text-center max-w-xs w-full"
+            style={{ boxShadow: '0 16px 48px -12px rgba(60,45,30,0.28), 0 4px 12px rgba(60,45,30,0.08)' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <p className="font-serif text-[20px] text-[var(--ink)] mb-1">sign in to do this</p>
+            <p className="text-sm text-[var(--ink-faint)] mb-6">create an account or sign in to continue</p>
+            <Link
+              href="/login"
+              className="block text-white font-semibold py-3 rounded-xl text-[15px] text-center"
+              style={{ background: 'linear-gradient(135deg, #cf7152, #b85a3e)' }}
             >
-              <p className="text-[13px] text-[var(--ink-soft)] leading-relaxed mb-3">
-                {nudgePrompt.current}
-              </p>
-              <div className="flex items-center justify-between">
-                <button
-                  onClick={nudgeShare}
-                  className="text-[13px] font-medium text-[var(--accent)] hover:underline"
-                >
-                  share the moment
-                </button>
-                <button
-                  onClick={dismissNudge}
-                  className="text-[var(--ink-faint)] hover:text-[var(--ink)] text-lg leading-none"
-                  aria-label="dismiss"
-                >
-                  ×
-                </button>
-              </div>
-            </div>
-          ) : (
+              sign in
+            </Link>
             <button
-              onClick={() => setNudgeExpanded(true)}
-              className="nudge-bubble w-11 h-11 rounded-full flex items-center justify-center"
-              style={{ background: '#f0d9ce' }}
-              aria-label="share a moment"
+              onClick={() => setShowAuthGate(false)}
+              className="mt-3 text-sm text-[var(--ink-faint)] hover:text-[var(--ink)] transition-colors"
             >
-              <span className="text-[var(--accent)] text-lg leading-none">✦</span>
+              not now
             </button>
-          )}
+          </div>
         </div>
       )}
 
-      <PostModal user={user} externalTrigger={postTrigger} />
-      <BottomNav activeView={view} onViewChange={setView} />
+      {/* exit intent nudge modal */}
+      {nudgeOpen && (
+        <div
+          className="backdrop-in fixed inset-0 z-50 flex items-center justify-center px-6"
+          style={{ background: 'rgba(44,38,32,0.45)' }}
+          onClick={handleNudgeOverlayDismiss}
+        >
+          <div
+            className="sheet-in bg-[#fffdf9] rounded-[28px] w-full max-w-sm px-10 py-10 text-center"
+            style={{ boxShadow: '0 32px 80px -20px rgba(60,45,30,0.38), 0 8px 24px rgba(60,45,30,0.12)' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <p className="font-serif text-[22px] leading-[1.45] text-[var(--ink)] mb-8">
+              {NUDGE_PROMPTS[nudgePromptIndex.current]}
+            </p>
+            <button
+              onClick={handleNudgeShare}
+              className="press block w-full text-white font-semibold py-3.5 rounded-2xl text-[15px] mb-3"
+              style={{ background: 'linear-gradient(135deg, #cf7152, #b85a3e)' }}
+            >
+              share my moment
+            </button>
+            <button
+              onClick={handleNudgeNotNow}
+              className="text-sm text-[var(--ink-faint)] hover:text-[var(--ink)] transition-colors py-1"
+            >
+              not now
+            </button>
+          </div>
+        </div>
+      )}
+
+      <PostModal user={user} externalTrigger={postTrigger} onAuthRequired={handleAuthRequired} />
+      <BottomNav activeView={view} onViewChange={handleViewChange} />
     </>
   )
 }
@@ -199,12 +293,14 @@ function SimpleList({
   user,
   savedIds,
   onSaveToggle,
+  onAuthRequired,
   emptyMessage,
 }: {
   moments: Moment[]
   user: User | null
   savedIds: Set<string>
   onSaveToggle: (id: string, saved: boolean) => void
+  onAuthRequired: () => void
   emptyMessage: string
 }) {
   if (moments.length === 0) {
@@ -222,6 +318,7 @@ function SimpleList({
           user={user}
           initialSaved={savedIds.has(m.id)}
           onSaveToggle={onSaveToggle}
+          onAuthRequired={onAuthRequired}
         />
       ))}
     </div>

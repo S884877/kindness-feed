@@ -33,9 +33,11 @@ function randomUsername() {
 export default function PostModal({
   user,
   externalTrigger = 0,
+  onAuthRequired,
 }: {
   user: User | null
   externalTrigger?: number
+  onAuthRequired?: () => void
 }) {
   const [open, setOpen] = useState(false)
   const [kindness, setKindness] = useState('')
@@ -88,7 +90,7 @@ export default function PostModal({
   return (
     <>
       <button
-        onClick={() => setOpen(true)}
+        onClick={() => { if (!user) { onAuthRequired?.(); return } setOpen(true) }}
         className="press fixed bottom-20 right-6 z-30 text-white font-semibold text-sm px-6 py-4 rounded-full flex items-center gap-2"
         style={{
           background: 'linear-gradient(135deg, #cf7152, #b85a3e)',

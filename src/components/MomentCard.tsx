@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { Moment } from '@/lib/types'
 import { createClient } from '@/lib/supabase/client'
 import { renderMomentImage } from '@/lib/shareImage'
@@ -57,22 +56,23 @@ export default function MomentCard({
   user,
   initialSaved = false,
   onSaveToggle,
+  onAuthRequired,
 }: {
   moment: Moment
   index?: number
   user: User | null
   initialSaved?: boolean
   onSaveToggle?: (id: string, saved: boolean) => void
+  onAuthRequired?: () => void
 }) {
   const [copied, setCopied] = useState(false)
   const [sharing, setSharing] = useState(false)
   const [saved, setSaved] = useState(initialSaved)
   const [saveBusy, setSaveBusy] = useState(false)
-  const router = useRouter()
 
   async function handleSave() {
     if (!user) {
-      router.push('/login')
+      onAuthRequired?.()
       return
     }
     if (saveBusy) return
@@ -97,6 +97,10 @@ export default function MomentCard({
   }
 
   async function share() {
+    if (!user) {
+      onAuthRequired?.()
+      return
+    }
     const url = `${window.location.origin}/m/${moment.id}`
     try {
       await navigator.clipboard.writeText(url)

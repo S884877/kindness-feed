@@ -26,11 +26,13 @@ export default function Feed({
   user,
   savedIds,
   onSaveToggle,
+  onAuthRequired,
 }: {
   initialMoments: Moment[]
   user: User | null
   savedIds: Set<string>
   onSaveToggle: (id: string, saved: boolean) => void
+  onAuthRequired: () => void
 }) {
   const [moments, setMoments] = useState<Moment[]>(initialMoments)
   const [loading, setLoading] = useState(false)
@@ -72,6 +74,7 @@ export default function Feed({
             user={user}
             initialSaved={savedIds.has(m.id)}
             onSaveToggle={onSaveToggle}
+            onAuthRequired={onAuthRequired}
           />
         ))}
       </div>
