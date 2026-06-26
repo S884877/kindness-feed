@@ -1,6 +1,20 @@
 import type { Metadata } from 'next'
+import { Fraunces, Inter } from 'next/font/google'
 import './globals.css'
 import NavBar from '@/components/NavBar'
+
+const fraunces = Fraunces({
+  subsets: ['latin'],
+  variable: '--font-serif',
+  display: 'swap',
+  axes: ['opsz', 'SOFT', 'WONK'],
+})
+
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-sans',
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
   title: 'the kindness project',
@@ -18,10 +32,10 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${fraunces.variable} ${inter.variable}`}>
       <body>
         <NavBar />
-        <main className="pt-20 pb-24">
+        <main className="pt-24 pb-28">
           <div className="feed-frame">
             {children}
           </div>

@@ -39,7 +39,7 @@ export default async function MomentPage({ params }: Props) {
 
   const { data } = await supabase
     .from('moments')
-    .select('id, kindness, feeling, location, created_at')
+    .select('id, kindness, feeling, location, first_name, mood, me_too_count, created_at')
     .eq('id', id)
     .single()
 

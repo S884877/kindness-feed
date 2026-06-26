@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { MOOD_ORDER, MOODS, Mood } from '@/lib/moods'
 
 const MAX = 280
 
@@ -16,6 +17,8 @@ export default function PostModal() {
   const [kindness, setKindness] = useState('')
   const [feeling, setFeeling] = useState('')
   const [location, setLocation] = useState('')
+  const [firstName, setFirstName] = useState('')
+  const [mood, setMood] = useState<Mood | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const router = useRouter()
@@ -27,6 +30,8 @@ export default function PostModal() {
     setKindness('')
     setFeeling('')
     setLocation('')
+    setFirstName('')
+    setMood(null)
     setError('')
   }
 
@@ -41,6 +46,8 @@ export default function PostModal() {
       feeling: feeling.trim(),
       posted_by: randomUsername(),
       location: location.trim() || null,
+      first_name: firstName.trim() || null,
+      mood: mood,
     })
     if (err) {
       setError('something went wrong. try again.')
@@ -52,12 +59,20 @@ export default function PostModal() {
     router.refresh()
   }
 
+  const labelCls = 'block text-[11px] font-semibold text-[var(--ink-faint)] uppercase tracking-[0.08em] mb-2.5'
+  const fieldCls =
+    'w-full border border-[var(--line)] rounded-2xl px-4 py-3.5 text-[var(--ink)] bg-[#fffdf9] placeholder:text-[var(--ink-faint)]/60 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/40 focus:border-[var(--accent)]/40 transition text-[15px] leading-relaxed'
+
   return (
     <>
       {/* Floating button */}
       <button
         onClick={openModal}
-        className="fixed bottom-6 right-6 z-30 bg-amber-500 hover:bg-amber-600 active:bg-amber-700 text-white font-semibold text-sm px-5 py-3.5 rounded-full shadow-lg transition-colors flex items-center gap-2"
+        className="press fixed bottom-6 right-6 z-30 text-white font-semibold text-sm px-6 py-4 rounded-full flex items-center gap-2"
+        style={{
+          background: 'linear-gradient(135deg, #cf7152, #b85a3e)',
+          boxShadow: '0 8px 24px -6px rgba(184, 90, 62, 0.55), 0 2px 6px rgba(0,0,0,0.08)',
+        }}
       >
         <span className="text-base leading-none">✦</span>
         share a moment
@@ -66,27 +81,28 @@ export default function PostModal() {
       {/* Backdrop */}
       {open && (
         <div
-          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm flex items-center justify-center px-4"
+          className="backdrop-in fixed inset-0 z-40 bg-[#2c2620]/35 backdrop-blur-md flex items-center justify-center px-4 py-8 overflow-y-auto"
           onClick={(e) => { if (e.target === e.currentTarget) closeModal() }}
         >
           {/* Modal */}
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg p-6">
+          <div
+            className="sheet-in bg-[#fffdf9] rounded-[28px] w-full max-w-lg p-7 my-auto"
+            style={{ boxShadow: '0 30px 80px -20px rgba(60,45,30,0.4), 0 8px 24px rgba(60,45,30,0.12)' }}
+          >
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-bold text-stone-900">share a moment</h2>
+              <h2 className="font-serif text-2xl text-[var(--ink)]">share a moment</h2>
               <button
                 onClick={closeModal}
-                className="text-stone-400 hover:text-stone-600 transition-colors text-xl leading-none"
-                aria-label="Close"
+                className="press text-[var(--ink-faint)] hover:text-[var(--ink)] transition-colors text-2xl leading-none w-8 h-8 flex items-center justify-center rounded-full hover:bg-[#f3ece2]"
+                aria-label="close"
               >
                 ×
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+            <form onSubmit={handleSubmit} className="flex flex-col gap-6">
               <div>
-                <label className="block text-xs font-semibold text-stone-500 uppercase tracking-wide mb-2">
-                  what did someone do for you?
-                </label>
+                <label className={labelCls}>what did someone do for you?</label>
                 <textarea
                   value={kindness}
                   onChange={(e) => setKindness(e.target.value)}
@@ -94,15 +110,13 @@ export default function PostModal() {
                   rows={3}
                   placeholder="a stranger held the door open even though i was far away..."
                   required
-                  className="w-full border border-stone-200 rounded-xl px-4 py-3 text-stone-900 placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none text-sm leading-relaxed"
+                  className={`${fieldCls} resize-none font-serif`}
                 />
-                <p className="text-right text-xs text-stone-300 mt-1">{kindness.length}/{MAX}</p>
+                <p className="text-right text-[11px] text-[var(--ink-faint)]/70 mt-1.5">{kindness.length}/{MAX}</p>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-stone-500 uppercase tracking-wide mb-2">
-                  how did it make you feel?
-                </label>
+                <label className={labelCls}>how did it make you feel?</label>
                 <textarea
                   value={feeling}
                   onChange={(e) => setFeeling(e.target.value)}
@@ -110,31 +124,69 @@ export default function PostModal() {
                   rows={3}
                   placeholder="like i wasn't invisible. like i mattered for just a moment..."
                   required
-                  className="w-full border border-stone-200 rounded-xl px-4 py-3 text-stone-900 placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-400 resize-none text-sm leading-relaxed"
+                  className={`${fieldCls} resize-none font-serif italic`}
                 />
-                <p className="text-right text-xs text-stone-300 mt-1">{feeling.length}/{MAX}</p>
+                <p className="text-right text-[11px] text-[var(--ink-faint)]/70 mt-1.5">{feeling.length}/{MAX}</p>
               </div>
 
+              {/* mood picker */}
               <div>
-                <label className="block text-xs font-semibold text-stone-500 uppercase tracking-wide mb-2">
-                  where are you from? (optional)
-                </label>
-                <input
-                  type="text"
-                  value={location}
-                  onChange={(e) => setLocation(e.target.value)}
-                  maxLength={100}
-                  placeholder="your city or town"
-                  className="w-full border border-stone-200 rounded-xl px-4 py-3 text-stone-900 placeholder:text-stone-300 focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm"
-                />
+                <label className={labelCls}>how would you name that feeling?</label>
+                <div className="flex flex-wrap gap-2.5">
+                  {MOOD_ORDER.map((m) => {
+                    const active = mood === m
+                    const cfg = MOODS[m]
+                    return (
+                      <button
+                        key={m}
+                        type="button"
+                        onClick={() => setMood(active ? null : m)}
+                        className="press text-sm font-medium px-4 py-2 rounded-full transition-all lowercase"
+                        style={
+                          active
+                            ? { backgroundColor: cfg.chipBg, color: cfg.chipText, boxShadow: `0 0 0 2px ${cfg.chipText}33` }
+                            : { backgroundColor: '#f4ece2', color: 'var(--ink-soft)' }
+                        }
+                      >
+                        {cfg.label}
+                      </button>
+                    )
+                  })}
+                </div>
               </div>
 
-              {error && <p className="text-red-500 text-sm">{error}</p>}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className={labelCls}>your first name</label>
+                  <input
+                    type="text"
+                    value={firstName}
+                    onChange={(e) => setFirstName(e.target.value)}
+                    maxLength={40}
+                    placeholder="your first name (optional)"
+                    className={fieldCls}
+                  />
+                </div>
+                <div>
+                  <label className={labelCls}>where from?</label>
+                  <input
+                    type="text"
+                    value={location}
+                    onChange={(e) => setLocation(e.target.value)}
+                    maxLength={100}
+                    placeholder="your city or town"
+                    className={fieldCls}
+                  />
+                </div>
+              </div>
+
+              {error && <p className="text-[var(--accent)] text-sm">{error}</p>}
 
               <button
                 type="submit"
                 disabled={loading || !kindness.trim() || !feeling.trim()}
-                className="bg-amber-500 hover:bg-amber-600 disabled:opacity-40 text-white font-semibold py-3 rounded-xl transition-colors text-sm"
+                className="press text-white font-semibold py-3.5 rounded-2xl transition-all text-[15px] disabled:opacity-40"
+                style={{ background: 'linear-gradient(135deg, #cf7152, #b85a3e)' }}
               >
                 {loading ? 'posting...' : 'post your moment'}
               </button>

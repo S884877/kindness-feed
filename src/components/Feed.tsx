@@ -7,10 +7,12 @@ import { Moment } from '@/lib/types'
 
 const PAGE_SIZE = 10
 
+const COLUMNS = 'id, kindness, feeling, location, first_name, mood, me_too_count, created_at'
+
 async function fetchMoments(supabase: ReturnType<typeof createClient>, from: number) {
   const { data, error } = await supabase
     .from('moments')
-    .select('id, kindness, feeling, location, created_at')
+    .select(COLUMNS)
     .order('created_at', { ascending: false })
     .range(from, from + PAGE_SIZE - 1)
 
@@ -45,9 +47,9 @@ export default function Feed({ initialMoments }: { initialMoments: Moment[] }) {
 
   return (
     <div>
-      <div className="flex flex-col gap-3">
-        {moments.map((m) => (
-          <MomentCard key={m.id} moment={m} />
+      <div className="flex flex-col gap-5">
+        {moments.map((m, i) => (
+          <MomentCard key={m.id} moment={m} index={i} />
         ))}
       </div>
       <div id="feed-sentinel" className="h-4 mt-4" />
