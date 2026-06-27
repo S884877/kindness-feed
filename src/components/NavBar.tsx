@@ -35,14 +35,22 @@ export default function NavBar() {
         <Link href="/" className="font-serif text-[var(--ink)] text-xl tracking-tight">
           the kindness project
         </Link>
-        {session && (
-          <button
-            onClick={handleLogout}
+        <div className="flex items-center gap-5">
+          <Link
+            href="/about"
             className="text-xs text-[var(--ink-faint)] hover:text-[var(--ink)] transition-colors"
           >
-            sign out
-          </button>
-        )}
+            why this exists
+          </Link>
+          {session && (
+            <button
+              onClick={handleLogout}
+              className="text-xs text-[var(--ink-faint)] hover:text-[var(--ink)] transition-colors"
+            >
+              sign out
+            </button>
+          )}
+        </div>
       </nav>
     </header>
   )
