@@ -162,6 +162,7 @@ export default function PostModal({
       if (finalImageUrl !== undefined) update.image_url = finalImageUrl
       const { error: err } = await supabase.from('moments').update(update).eq('id', editMoment.id)
       if (err) {
+        console.error('update error:', err)
         setError('something went wrong. try again.')
         setLoading(false)
         return
@@ -177,6 +178,7 @@ export default function PostModal({
       if (finalImageUrl !== undefined) insert.image_url = finalImageUrl
       const { error: err } = await supabase.from('moments').insert(insert)
       if (err) {
+        console.error('insert error:', err)
         setError('something went wrong. try again.')
         setLoading(false)
         return
