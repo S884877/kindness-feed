@@ -57,40 +57,41 @@ export default function NavBar() {
           the kindness project
         </Link>
 
-        <div className="relative" ref={dropdownRef}>
-          <button
-            onClick={() => setOpen(o => !o)}
-            className="w-8 h-8 flex items-center justify-center rounded-full text-[var(--ink-faint)] hover:text-[var(--ink)] hover:bg-[#ece5da] transition-colors"
-            aria-label="menu"
+        <div className="flex items-center gap-4">
+          <Link
+            href="/about"
+            className="text-xs text-[var(--ink-faint)] hover:text-[var(--ink)] transition-colors"
           >
-            <UserIcon />
-          </button>
+            how this started
+          </Link>
 
-          {open && (
-            <div
-              className="absolute right-0 top-full mt-2 rounded-xl overflow-hidden"
-              style={{
-                background: '#fffdf9',
-                border: '1px solid var(--line)',
-                boxShadow: '0 8px 24px -4px rgba(60,45,30,0.14)',
-                minWidth: '168px',
-              }}
-            >
-              <Link
-                href="/about"
-                onClick={() => setOpen(false)}
-                className="block px-4 py-3 text-[13px] text-[var(--ink-soft)] hover:bg-[var(--cream)] transition-colors"
+          {session && (
+            <div className="relative" ref={dropdownRef}>
+              <button
+                onClick={() => setOpen(o => !o)}
+                className="w-8 h-8 flex items-center justify-center rounded-full text-[var(--ink-faint)] hover:text-[var(--ink)] hover:bg-[#ece5da] transition-colors"
+                aria-label="account"
               >
-                how this started
-              </Link>
-              {session && (
-                <button
-                  onClick={() => { handleLogout(); setOpen(false) }}
-                  className="w-full text-left px-4 py-3 text-[13px] text-[var(--ink-faint)] hover:bg-[var(--cream)] hover:text-[var(--ink)] transition-colors"
-                  style={{ borderTop: '1px solid var(--line)' }}
+                <UserIcon />
+              </button>
+
+              {open && (
+                <div
+                  className="absolute right-0 top-full mt-2 rounded-xl overflow-hidden"
+                  style={{
+                    background: '#fffdf9',
+                    border: '1px solid var(--line)',
+                    boxShadow: '0 8px 24px -4px rgba(60,45,30,0.14)',
+                    minWidth: '120px',
+                  }}
                 >
-                  sign out
-                </button>
+                  <button
+                    onClick={() => { handleLogout(); setOpen(false) }}
+                    className="w-full text-left px-4 py-3 text-[13px] text-[var(--ink-faint)] hover:bg-[var(--cream)] hover:text-[var(--ink)] transition-colors"
+                  >
+                    sign out
+                  </button>
+                </div>
               )}
             </div>
           )}
