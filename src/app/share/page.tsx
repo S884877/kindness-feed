@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getSession } from '@/lib/session'
-import { MOODS, MOOD_ORDER, type Mood } from '@/lib/moods'
 
 const MAX_WORDS = 350
 
@@ -34,7 +33,6 @@ function randomUsername() {
 export default function SharePage() {
   const [kindness, setKindness] = useState('')
   const [feeling, setFeeling] = useState('')
-  const [mood, setMood] = useState<Mood | null>(null)
   const [location, setLocation] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -59,7 +57,7 @@ export default function SharePage() {
       feeling: feeling.trim(),
       posted_by: randomUsername(),
       location: location.trim() || null,
-      mood: mood ?? null,
+
     }
     if (session?.id) insert.user_id = session.id
 
@@ -123,31 +121,6 @@ export default function SharePage() {
               </p>
             )
           })()}
-        </div>
-
-        <div>
-          <label className={labelCls}>how would you describe it? (optional)</label>
-          <div className="flex flex-wrap gap-2">
-            {MOOD_ORDER.map((m) => {
-              const { label, chipBg, chipText } = MOODS[m]
-              const active = mood === m
-              return (
-                <button
-                  key={m}
-                  type="button"
-                  onClick={() => setMood(active ? null : m)}
-                  className="px-4 py-2 rounded-full text-[13px] font-medium transition-all"
-                  style={
-                    active
-                      ? { background: chipBg, color: chipText, border: `1.5px solid ${chipText}40` }
-                      : { background: 'transparent', color: 'var(--ink-faint)', border: '1.5px solid var(--line)' }
-                  }
-                >
-                  {label}
-                </button>
-              )
-            })}
-          </div>
         </div>
 
         <div>
