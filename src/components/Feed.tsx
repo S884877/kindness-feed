@@ -11,6 +11,11 @@ const NUDGE_INSERT_AFTER = 4
 const COLUMNS = 'id, kindness, feeling, location, mood, image_url, created_at, posted_by, user_id'
 
 const NUDGE_PROMPTS = [
+  "someone was kind to you recently. what happened?",
+  "tell us about a moment someone made your day.",
+  "who showed you kindness? share their moment.",
+  "a small act. a big feeling. what was yours?",
+  "what kindness are you still thinking about?",
   "you've been reading for a while. something must have stayed with you.",
   "did someone do something small that meant everything? tell us.",
   "when did a stranger's kindness catch you off guard? we'd love to hear it.",

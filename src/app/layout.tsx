@@ -19,6 +19,7 @@ const inter = Inter({
 export const metadata: Metadata = {
   title: 'the kindness project',
   description: 'small moments of kindness and how they made people feel.',
+  icons: [],
   openGraph: {
     title: 'the kindness project',
     description: 'small moments of kindness and how they made people feel.',
