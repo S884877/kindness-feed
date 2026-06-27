@@ -1,35 +1,74 @@
 import Link from 'next/link'
 
 export const metadata = {
-  title: 'why this exists — the kindness wall',
+  title: 'how this started — the kindness wall',
 }
 
-const paragraphs = [
-  'Someone held the door open a little longer than they had to.',
-  'A stranger paid for your coffee. Your neighbor knocked with a plate of food. A friend said exactly the right thing at exactly the right time.',
-  'Small moments. Easy to forget. But you didn\'t — and that means something.',
-  'the kindness wall is a place to put those moments down before they fade. no names. no likes. no noise. just real people, remembering real kindness.',
-  'because the world has enough places to share what\'s wrong with it. this is a place to remember what\'s quietly, beautifully right.',
-  'share a moment. keep one that moves you. pass on the kindness. come back when you need to be reminded that people are good.',
-  'they are. they really are.',
-]
+const pCls = 'font-serif text-[19px] leading-[1.75] text-[var(--ink-soft)]'
 
 export default function AboutPage() {
   return (
     <div className="feed-frame px-6 py-16">
       <h1 className="font-serif text-[28px] text-[var(--ink)] mb-12 leading-snug">
-        why this exists
+        how this started
       </h1>
 
       <div className="flex flex-col gap-7">
-        {paragraphs.map((p, i) => (
-          <p
-            key={i}
-            className="font-serif text-[19px] leading-[1.75] text-[var(--ink-soft)]"
+        <p className={pCls}>
+          in january 2026, i fractured my left tibia and spent 8 weeks in a cast. i couldn't move around much. it wasn't terrible, but i needed help with things every day. i was working from home, and my brother saju took care of almost everything. he made sure i had my medications on time, food on time. he was there whenever i needed him, middle of the night, middle of the day, any time.
+        </p>
+
+        <p className={pCls}>
+          we got really close that period. and i realized he didn't have to do any of it just because he's family. but he did.
+        </p>
+
+        <p className={pCls}>
+          that got me thinking about how many people have been kind to me, every day, my whole life. there are so many small moments of kindness around us that we just miss them. we're moving too fast. we're not paying attention. we're not stopping to think about how good the world actually is. that's why i started working on this with saju. to collect those moments. to share them.
+        </p>
+
+        <p className={pCls}>here's how it works:</p>
+
+        <ol className="flex flex-col gap-4 pl-1">
+          {[
+            'you post the kindest thing someone has done for you. today, two weeks ago, twenty years ago. anywhere. you share it.',
+            'you read what others have shared. the small things people did for them that they still remember.',
+            'and if something hits you today, tomorrow, whenever, come back and post that too.',
+          ].map((item, i) => (
+            <li key={i} className="flex gap-4">
+              <span className="font-serif text-[19px] text-[var(--ink-faint)] shrink-0 w-5">{i + 1}.</span>
+              <p className={pCls}>{item}</p>
+            </li>
+          ))}
+        </ol>
+
+        <p className={pCls}>
+          that's it. no likes, no comments. you can save the ones that stay with you, and see everything you've posted when you log back in.
+        </p>
+
+        <p className={pCls}>
+          i didn't build this to keep you hooked. i don't want you to feel guilty after using this. i built it so you leave feeling grateful. feeling like the world is a little nicer than you thought. because it is. go spread some of that around. peace.
+        </p>
+
+        <p className={pCls}>
+          —{' '}
+          <a
+            href="https://x.com/DanielPraburaj"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline underline-offset-2 decoration-[var(--ink-faint)] hover:text-[var(--ink)] transition-colors"
           >
-            {p}
-          </p>
-        ))}
+            daniel
+          </a>
+          {' '}and{' '}
+          <a
+            href="https://x.com/apraveen494"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="underline underline-offset-2 decoration-[var(--ink-faint)] hover:text-[var(--ink)] transition-colors"
+          >
+            saju
+          </a>
+        </p>
       </div>
 
       <div className="mt-16">

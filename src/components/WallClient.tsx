@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getSession, type Session } from '@/lib/session'
 import Feed from './Feed'
@@ -20,10 +21,10 @@ export default function WallClient({ initialMoments }: { initialMoments: Moment[
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
   const [mineMoments, setMineMoments] = useState<Moment[]>([])
   const [keptMoments, setKeptMoments] = useState<Moment[]>([])
-  const [postTrigger, setPostTrigger] = useState(0)
   const [showAuthGate, setShowAuthGate] = useState(false)
   const [editMoment, setEditMoment] = useState<Moment | null>(null)
   const supabase = createClient()
+  const router = useRouter()
 
   useEffect(() => {
     setSession(getSession())
@@ -94,6 +95,11 @@ export default function WallClient({ initialMoments }: { initialMoments: Moment[
     setShowAuthGate(true)
   }
 
+  function handleNudgeShare() {
+    if (!session) { setShowAuthGate(true); return }
+    router.push('/share')
+  }
+
   return (
     <>
       {view === 'wall' && (
@@ -103,7 +109,7 @@ export default function WallClient({ initialMoments }: { initialMoments: Moment[
           savedIds={savedIds}
           onSaveToggle={handleSaveToggle}
           onAuthRequired={handleAuthRequired}
-          onNudgeShare={() => setPostTrigger(t => t + 1)}
+          onNudgeShare={handleNudgeShare}
         />
       )}
 
@@ -163,9 +169,6 @@ export default function WallClient({ initialMoments }: { initialMoments: Moment[
       )}
 
       <PostModal
-        session={session}
-        externalTrigger={postTrigger}
-        onAuthRequired={handleAuthRequired}
         editMoment={editMoment}
         onEditDone={() => {
           setEditMoment(null)

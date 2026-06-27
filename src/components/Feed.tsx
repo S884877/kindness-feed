@@ -104,7 +104,6 @@ export default function Feed({
   }, [loadMore])
 
   function handleNudgeShare() {
-    if (!session) { onAuthRequired(); return }
     onNudgeShare()
   }
 
