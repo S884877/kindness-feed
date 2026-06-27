@@ -29,6 +29,7 @@ async function fetchMoments(supabase: ReturnType<typeof createClient>, from: num
     .select(COLUMNS)
     .order('created_at', { ascending: false })
     .range(from, from + PAGE_SIZE - 1)
+  if (error) console.error('fetchMoments error:', error)
   if (error || !data) return []
   return data as Moment[]
 }

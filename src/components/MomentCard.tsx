@@ -84,11 +84,13 @@ export default function MomentCard({
     setSaveBusy(true)
     const supabase = createClient()
     if (saved) {
-      await supabase.from('saved_moments').delete().eq('user_id', session.id).eq('moment_id', moment.id)
+      const { error } = await supabase.from('saved_moments').delete().eq('user_id', session.id).eq('moment_id', moment.id)
+      if (error) console.error('unsave error:', error)
       setSaved(false)
       onSaveToggle?.(moment.id, false)
     } else {
-      await supabase.from('saved_moments').insert({ user_id: session.id, moment_id: moment.id })
+      const { error } = await supabase.from('saved_moments').insert({ user_id: session.id, moment_id: moment.id })
+      if (error) console.error('save error:', error)
       setSaved(true)
       onSaveToggle?.(moment.id, true)
     }
@@ -123,7 +125,8 @@ export default function MomentCard({
   async function handleDelete() {
     setDeleting(true)
     const supabase = createClient()
-    await supabase.from('moments').delete().eq('id', moment.id)
+    const { error } = await supabase.from('moments').delete().eq('id', moment.id)
+    if (error) console.error('delete error:', error)
     onDelete?.(moment.id)
   }
 

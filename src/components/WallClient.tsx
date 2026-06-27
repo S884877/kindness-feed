@@ -35,7 +35,8 @@ export default function WallClient({ initialMoments }: { initialMoments: Moment[
       .from('saved_moments')
       .select('moment_id')
       .eq('user_id', session.id)
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) console.error('savedIds fetch error:', error)
         if (data) setSavedIds(new Set(data.map((r: { moment_id: string }) => r.moment_id)))
       })
   }, [session])
@@ -47,7 +48,10 @@ export default function WallClient({ initialMoments }: { initialMoments: Moment[
       .select(COLUMNS)
       .eq('user_id', session.id)
       .order('created_at', { ascending: false })
-      .then(({ data }) => { if (data) setMineMoments(data as Moment[]) })
+      .then(({ data, error }) => {
+        if (error) console.error('mine fetch error:', error)
+        if (data) setMineMoments(data as Moment[])
+      })
   }, [view, session])
 
   useEffect(() => {
@@ -57,7 +61,8 @@ export default function WallClient({ initialMoments }: { initialMoments: Moment[
       .select(`moment_id, moments:moment_id(${COLUMNS})`)
       .eq('user_id', session.id)
       .order('created_at', { ascending: false })
-      .then(({ data }) => {
+      .then(({ data, error }) => {
+        if (error) console.error('kept fetch error:', error)
         if (data) {
           const moments = data.map((r: any) => r.moments).filter(Boolean) as Moment[]
           setKeptMoments(moments)
@@ -164,14 +169,16 @@ export default function WallClient({ initialMoments }: { initialMoments: Moment[
         editMoment={editMoment}
         onEditDone={() => {
           setEditMoment(null)
-          // refresh mine list after edit
           if (session) {
             supabase
               .from('moments')
               .select(COLUMNS)
               .eq('user_id', session.id)
               .order('created_at', { ascending: false })
-              .then(({ data }) => { if (data) setMineMoments(data as Moment[]) })
+              .then(({ data, error }) => {
+                if (error) console.error('mine refresh error:', error)
+                if (data) setMineMoments(data as Moment[])
+              })
           }
         }}
       />

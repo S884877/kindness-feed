@@ -124,7 +124,10 @@ export default function PostModal({
     const ext = file.name.split('.').pop() ?? 'jpg'
     const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
     const { error } = await supabase.storage.from('moment-images').upload(path, file, { upsert: false })
-    if (error) return null
+    if (error) {
+      console.error('storage upload error:', error)
+      return null
+    }
     const { data } = supabase.storage.from('moment-images').getPublicUrl(path)
     return data.publicUrl
   }
@@ -163,23 +166,24 @@ export default function PostModal({
       const { error: err } = await supabase.from('moments').update(update).eq('id', editMoment.id)
       if (err) {
         console.error('update error:', err)
-        setError('something went wrong. try again.')
+        setError(err.message || 'something went wrong. try again.')
         setLoading(false)
         return
       }
     } else {
+      const userId = session?.id ?? null
       const insert: Record<string, unknown> = {
         kindness: kindness.trim(),
         feeling: feeling.trim(),
         posted_by: randomUsername(),
         location: location.trim() || null,
-        user_id: session?.id ?? null,
       }
+      if (userId) insert.user_id = userId
       if (finalImageUrl !== undefined) insert.image_url = finalImageUrl
       const { error: err } = await supabase.from('moments').insert(insert)
       if (err) {
         console.error('insert error:', err)
-        setError('something went wrong. try again.')
+        setError(err.message || 'something went wrong. try again.')
         setLoading(false)
         return
       }
