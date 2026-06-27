@@ -9,7 +9,7 @@ export default async function Home() {
 
   const { data } = await supabase
     .from('moments')
-    .select('id, kindness, feeling, location, mood, created_at, posted_by, user_id')
+    .select('id, kindness, feeling, location, mood, image_url, created_at, posted_by, user_id')
     .order('created_at', { ascending: false })
     .range(0, PAGE_SIZE - 1)
 

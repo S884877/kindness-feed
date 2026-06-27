@@ -57,6 +57,9 @@ export default function MomentCard({
   initialSaved = false,
   onSaveToggle,
   onAuthRequired,
+  showMineActions = false,
+  onEdit,
+  onDelete,
 }: {
   moment: Moment
   index?: number
@@ -64,11 +67,16 @@ export default function MomentCard({
   initialSaved?: boolean
   onSaveToggle?: (id: string, saved: boolean) => void
   onAuthRequired?: () => void
+  showMineActions?: boolean
+  onEdit?: (moment: Moment) => void
+  onDelete?: (id: string) => void
 }) {
   const [copied, setCopied] = useState(false)
   const [sharing, setSharing] = useState(false)
   const [saved, setSaved] = useState(initialSaved)
   const [saveBusy, setSaveBusy] = useState(false)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [deleting, setDeleting] = useState(false)
 
   async function handleSave() {
     if (!session) { onAuthRequired?.(); return }
@@ -76,17 +84,11 @@ export default function MomentCard({
     setSaveBusy(true)
     const supabase = createClient()
     if (saved) {
-      await supabase
-        .from('saved_moments')
-        .delete()
-        .eq('user_id', session.id)
-        .eq('moment_id', moment.id)
+      await supabase.from('saved_moments').delete().eq('user_id', session.id).eq('moment_id', moment.id)
       setSaved(false)
       onSaveToggle?.(moment.id, false)
     } else {
-      await supabase
-        .from('saved_moments')
-        .insert({ user_id: session.id, moment_id: moment.id })
+      await supabase.from('saved_moments').insert({ user_id: session.id, moment_id: moment.id })
       setSaved(true)
       onSaveToggle?.(moment.id, true)
     }
@@ -118,6 +120,13 @@ export default function MomentCard({
     setSharing(false)
   }
 
+  async function handleDelete() {
+    setDeleting(true)
+    const supabase = createClient()
+    await supabase.from('moments').delete().eq('id', moment.id)
+    onDelete?.(moment.id)
+  }
+
   return (
     <article
       className="moment-card rise-in overflow-hidden"
@@ -135,8 +144,20 @@ export default function MomentCard({
         <p className="font-serif italic text-[17px] leading-[1.55] text-[var(--ink-soft)]">
           {moment.feeling}
         </p>
+
+        {moment.image_url && (
+          <div className="mt-5 -mx-7">
+            <img
+              src={moment.image_url}
+              alt=""
+              className="w-full object-cover"
+              style={{ maxHeight: '300px' }}
+            />
+          </div>
+        )}
       </div>
 
+      {/* main action bar */}
       <div className="px-7 py-4 border-t border-[var(--line)] flex items-center justify-between gap-3">
         <button
           onClick={handleSave}
@@ -164,6 +185,45 @@ export default function MomentCard({
           )}
         </div>
       </div>
+
+      {/* mine-only edit / delete row */}
+      {showMineActions && (
+        <div className="px-7 py-3 border-t border-[var(--line)] flex items-center gap-4">
+          {confirmDelete ? (
+            <div className="flex items-center gap-3 flex-wrap">
+              <span className="text-[13px] text-[var(--ink-soft)]">are you sure? this can't be undone</span>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="text-[13px] font-medium text-[var(--accent)] hover:underline disabled:opacity-50"
+              >
+                {deleting ? 'deleting…' : 'yes, delete'}
+              </button>
+              <button
+                onClick={() => setConfirmDelete(false)}
+                className="text-[13px] text-[var(--ink-faint)] hover:text-[var(--ink)]"
+              >
+                cancel
+              </button>
+            </div>
+          ) : (
+            <>
+              <button
+                onClick={() => onEdit?.(moment)}
+                className="text-[13px] text-[var(--ink-faint)] hover:text-[var(--ink)] transition-colors"
+              >
+                edit
+              </button>
+              <button
+                onClick={() => setConfirmDelete(true)}
+                className="text-[13px] text-[var(--ink-faint)] hover:text-[var(--accent)] transition-colors"
+              >
+                delete
+              </button>
+            </>
+          )}
+        </div>
+      )}
     </article>
   )
 }

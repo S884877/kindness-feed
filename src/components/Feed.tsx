@@ -8,7 +8,7 @@ import type { Session } from '@/lib/session'
 
 const PAGE_SIZE = 10
 const NUDGE_INSERT_AFTER = 4
-const COLUMNS = 'id, kindness, feeling, location, mood, created_at, posted_by, user_id'
+const COLUMNS = 'id, kindness, feeling, location, mood, image_url, created_at, posted_by, user_id'
 
 const NUDGE_PROMPTS = [
   "you've been reading for a while. something must have stayed with you.",

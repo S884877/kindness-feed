@@ -8,6 +8,7 @@ export type Moment = {
   feeling: string
   location: string | null
   mood: Mood | null
+  image_url: string | null
   created_at: string
 }
 

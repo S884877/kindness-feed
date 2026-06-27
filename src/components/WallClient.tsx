@@ -12,7 +12,7 @@ import { Moment } from '@/lib/types'
 
 type View = 'mine' | 'wall' | 'kept'
 
-const COLUMNS = 'id, kindness, feeling, location, mood, created_at, posted_by, user_id'
+const COLUMNS = 'id, kindness, feeling, location, mood, image_url, created_at, posted_by, user_id'
 
 export default function WallClient({ initialMoments }: { initialMoments: Moment[] }) {
   const [view, setView] = useState<View>('wall')
@@ -22,6 +22,7 @@ export default function WallClient({ initialMoments }: { initialMoments: Moment[
   const [keptMoments, setKeptMoments] = useState<Moment[]>([])
   const [postTrigger, setPostTrigger] = useState(0)
   const [showAuthGate, setShowAuthGate] = useState(false)
+  const [editMoment, setEditMoment] = useState<Moment | null>(null)
   const supabase = createClient()
 
   useEffect(() => {
@@ -109,6 +110,9 @@ export default function WallClient({ initialMoments }: { initialMoments: Moment[
           onSaveToggle={handleSaveToggle}
           onAuthRequired={handleAuthRequired}
           emptyMessage="you haven't posted anything yet"
+          showMineActions
+          onEdit={setEditMoment}
+          onDelete={(id) => setMineMoments(prev => prev.filter(m => m.id !== id))}
         />
       )}
 
@@ -153,7 +157,24 @@ export default function WallClient({ initialMoments }: { initialMoments: Moment[
         </div>
       )}
 
-      <PostModal session={session} externalTrigger={postTrigger} onAuthRequired={handleAuthRequired} />
+      <PostModal
+        session={session}
+        externalTrigger={postTrigger}
+        onAuthRequired={handleAuthRequired}
+        editMoment={editMoment}
+        onEditDone={() => {
+          setEditMoment(null)
+          // refresh mine list after edit
+          if (session) {
+            supabase
+              .from('moments')
+              .select(COLUMNS)
+              .eq('user_id', session.id)
+              .order('created_at', { ascending: false })
+              .then(({ data }) => { if (data) setMineMoments(data as Moment[]) })
+          }
+        }}
+      />
       <BottomNav activeView={view} onViewChange={handleViewChange} />
     </>
   )
@@ -166,6 +187,9 @@ function SimpleList({
   onSaveToggle,
   onAuthRequired,
   emptyMessage,
+  showMineActions = false,
+  onEdit,
+  onDelete,
 }: {
   moments: Moment[]
   session: Session | null
@@ -173,6 +197,9 @@ function SimpleList({
   onSaveToggle: (id: string, saved: boolean) => void
   onAuthRequired: () => void
   emptyMessage: string
+  showMineActions?: boolean
+  onEdit?: (moment: Moment) => void
+  onDelete?: (id: string) => void
 }) {
   if (moments.length === 0) {
     return <p className="text-center text-stone-400 text-sm py-20">{emptyMessage}</p>
@@ -188,6 +215,9 @@ function SimpleList({
           initialSaved={savedIds.has(m.id)}
           onSaveToggle={onSaveToggle}
           onAuthRequired={onAuthRequired}
+          showMineActions={showMineActions}
+          onEdit={onEdit}
+          onDelete={onDelete}
         />
       ))}
     </div>
