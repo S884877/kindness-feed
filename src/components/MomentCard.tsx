@@ -140,11 +140,11 @@ export default function MomentCard({
           <span className="text-xs text-[var(--ink-faint)]">{relativeTime(moment.created_at)}</span>
         </div>
 
-        <p className="font-serif text-[22px] leading-[1.4] text-[var(--ink)] mb-4">
+        <p className="font-serif text-[15px] leading-[1.4] text-[var(--ink)] mb-4">
           {moment.kindness}
         </p>
 
-        <p className="font-serif italic text-[17px] leading-[1.55] text-[var(--ink-soft)]">
+        <p className="font-serif italic text-[15px] leading-[1.55] text-[var(--ink-soft)]">
           {moment.feeling}
         </p>
 
@@ -169,7 +169,7 @@ export default function MomentCard({
           style={saved ? { color: 'var(--accent)', backgroundColor: '#f3e7df' } : { color: 'var(--ink-soft)' }}
         >
           {saved ? <HeartFilled /> : <HeartOutline />}
-          <span>hold onto this</span>
+          <span>save</span>
         </button>
 
         <div className="relative">
@@ -179,7 +179,7 @@ export default function MomentCard({
             className="press flex items-center gap-1.5 text-[13px] text-[var(--ink-faint)] hover:text-[var(--ink)] transition-colors py-1 disabled:opacity-60"
           >
             <ShareIcon />
-            <span>{sharing ? 'creating image…' : 'pass it on'}</span>
+            <span>{sharing ? 'creating image…' : 'share'}</span>
           </button>
           {copied && (
             <span className="absolute -top-9 right-0 bg-[var(--ink)] text-white text-xs px-3 py-1.5 rounded-lg whitespace-nowrap shadow-md">

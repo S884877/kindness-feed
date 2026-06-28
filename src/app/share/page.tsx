@@ -6,7 +6,8 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { getSession } from '@/lib/session'
 
-const MAX_WORDS = 350
+const MAX_KINDNESS_WORDS = 200
+const MAX_FEELING_WORDS = 100
 
 function countWords(text: string): number {
   return text.trim() === '' ? 0 : text.trim().split(/\s+/).length
@@ -86,7 +87,7 @@ export default function SharePage() {
     setSubmitted(true)
   }
 
-  async function handlePassItOn() {
+  async function handleShare() {
     try {
       await navigator.clipboard.writeText(window.location.origin)
       setCopied(true)
@@ -101,17 +102,17 @@ export default function SharePage() {
           your moment is on the wall. 🤍
         </p>
         <p className="font-serif text-[18px] leading-[1.6] text-[var(--ink-soft)] mb-10">
-          feel free to pass it on.
+          feel free to share it.
         </p>
 
         <div className="relative">
           <button
-            onClick={handlePassItOn}
+            onClick={handleShare}
             className="press flex items-center gap-2 text-white font-semibold px-6 py-3.5 rounded-full text-[15px]"
             style={{ background: 'linear-gradient(135deg, #cf7152, #b85a3e)' }}
           >
             <ShareIcon />
-            pass it on
+            share
           </button>
           {copied && (
             <span
@@ -146,7 +147,7 @@ export default function SharePage() {
         <div>
           <textarea
             value={kindness}
-            onChange={(e) => setKindness(limitWords(e.target.value, MAX_WORDS))}
+            onChange={(e) => setKindness(limitWords(e.target.value, MAX_KINDNESS_WORDS))}
             rows={5}
             placeholder="a stranger held the door open even though i was far away..."
             required
@@ -156,8 +157,8 @@ export default function SharePage() {
           {(() => {
             const wc = countWords(kindness)
             return (
-              <p className="text-right text-[11px] mt-1.5" style={{ color: wc >= MAX_WORDS ? 'var(--accent)' : 'rgba(168,156,143,0.7)' }}>
-                {wc} / {MAX_WORDS}
+              <p className="text-right text-[11px] mt-1.5" style={{ color: wc >= MAX_KINDNESS_WORDS ? 'var(--accent)' : 'rgba(168,156,143,0.7)' }}>
+                {wc} / {MAX_KINDNESS_WORDS}
               </p>
             )
           })()}
@@ -167,7 +168,7 @@ export default function SharePage() {
           <label className={labelCls}>how did it make you feel?</label>
           <textarea
             value={feeling}
-            onChange={(e) => setFeeling(limitWords(e.target.value, MAX_WORDS))}
+            onChange={(e) => setFeeling(limitWords(e.target.value, MAX_FEELING_WORDS))}
             rows={5}
             placeholder="like i wasn't invisible. like i mattered for just a moment..."
             required
@@ -176,8 +177,8 @@ export default function SharePage() {
           {(() => {
             const wc = countWords(feeling)
             return (
-              <p className="text-right text-[11px] mt-1.5" style={{ color: wc >= MAX_WORDS ? 'var(--accent)' : 'rgba(168,156,143,0.7)' }}>
-                {wc} / {MAX_WORDS}
+              <p className="text-right text-[11px] mt-1.5" style={{ color: wc >= MAX_FEELING_WORDS ? 'var(--accent)' : 'rgba(168,156,143,0.7)' }}>
+                {wc} / {MAX_FEELING_WORDS}
               </p>
             )
           })()}
