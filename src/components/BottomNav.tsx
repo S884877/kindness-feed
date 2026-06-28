@@ -31,9 +31,11 @@ function HeartIcon({ active }: { active: boolean }) {
 export default function BottomNav({
   activeView,
   onViewChange,
+  onShare,
 }: {
   activeView: View
   onViewChange: (v: View) => void
+  onShare: () => void
 }) {
   return (
     <nav
@@ -48,7 +50,7 @@ export default function BottomNav({
     >
       <button
         onClick={() => onViewChange('mine')}
-        className="flex flex-col items-center gap-1 px-6 py-1"
+        className="flex flex-col items-center gap-1 px-5 py-1"
         aria-label="mine"
       >
         <PersonIcon active={activeView === 'mine'} />
@@ -57,7 +59,7 @@ export default function BottomNav({
 
       <button
         onClick={() => onViewChange('wall')}
-        className="flex flex-col items-center gap-1 px-6 py-1"
+        className="flex flex-col items-center gap-1 px-5 py-1"
         aria-label="wall"
       >
         <WallIcon active={activeView === 'wall'} />
@@ -65,8 +67,25 @@ export default function BottomNav({
       </button>
 
       <button
+        onClick={onShare}
+        aria-label="share a moment"
+        className="flex items-center justify-center rounded-full -mt-4"
+        style={{
+          width: '48px',
+          height: '48px',
+          background: 'linear-gradient(135deg, #cf7152, #b85a3e)',
+          boxShadow: '0 4px 14px -2px rgba(184,90,62,0.5)',
+        }}
+      >
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19" />
+          <line x1="5" y1="12" x2="19" y2="12" />
+        </svg>
+      </button>
+
+      <button
         onClick={() => onViewChange('kept')}
-        className="flex flex-col items-center gap-1 px-6 py-1"
+        className="flex flex-col items-center gap-1 px-5 py-1"
         aria-label="kept"
       >
         <HeartIcon active={activeView === 'kept'} />

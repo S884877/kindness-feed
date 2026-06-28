@@ -180,18 +180,6 @@ export default function WallClient({ initialMoments }: { initialMoments: Moment[
         </div>
       )}
 
-      <button
-        onClick={() => { if (!session) { setShowAuthGate(true); return } router.push('/share') }}
-        className="press fixed bottom-20 right-6 z-30 text-white font-semibold text-sm px-6 py-4 rounded-full flex items-center gap-2"
-        style={{
-          background: 'linear-gradient(135deg, #cf7152, #b85a3e)',
-          boxShadow: '0 8px 24px -6px rgba(184, 90, 62, 0.55), 0 2px 6px rgba(0,0,0,0.08)',
-        }}
-      >
-        <span className="text-base leading-none">✦</span>
-        share a moment
-      </button>
-
       <PostModal
         editMoment={editMoment}
         onEditDone={() => {
@@ -209,7 +197,11 @@ export default function WallClient({ initialMoments }: { initialMoments: Moment[
           }
         }}
       />
-      <BottomNav activeView={view} onViewChange={handleViewChange} />
+      <BottomNav
+        activeView={view}
+        onViewChange={handleViewChange}
+        onShare={() => { if (!session) { setShowAuthGate(true); return } router.push('/share') }}
+      />
     </>
   )
 }
