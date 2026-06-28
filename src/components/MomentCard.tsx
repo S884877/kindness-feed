@@ -140,7 +140,7 @@ export default function MomentCard({
           <span className="text-xs text-[var(--ink-faint)]">{relativeTime(moment.created_at)}</span>
         </div>
 
-        <p className="font-serif text-[15px] leading-[1.4] text-[var(--ink)] mb-4">
+        <p className="font-serif text-[18px] leading-[1.4] text-[var(--ink)] mb-4">
           {moment.kindness}
         </p>
 
