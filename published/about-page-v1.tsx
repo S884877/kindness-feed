@@ -26,7 +26,7 @@ export default function AboutPage() {
 
       <div className="flex flex-col gap-7">
         <p className={pCls}>
-          i'm daniel praburaj. in january 2026, i fractured my left tibia and spent 8 weeks in a cast. i couldn't move around much. it wasn't terrible, but i needed help with things every day. i was working from home, and my brother saju took care of almost everything. he was there whenever i needed him, middle of the night, middle of the day, any time.
+          i'm <XLink href="https://x.com/DanielPraburaj">daniel praburaj</XLink>. in january 2026, i fractured my left tibia and spent 8 weeks in a cast. i couldn't move around much. it wasn't terrible, but i needed help with things every day. i was working from home, and my brother <XLink href="https://x.com/apraveen494">saju</XLink> took care of almost everything. he made sure i had my medications on time, food on time. he was there whenever i needed him, middle of the night, middle of the day, any time.
         </p>
 
         <p className={pCls}>
@@ -34,7 +34,7 @@ export default function AboutPage() {
         </p>
 
         <p className={pCls}>
-          that got me thinking about how many people have been kind to me, every day, my whole life. there are so many small moments of kindness around us that we just miss them. we're moving too fast. we're not paying attention. we're not stopping to think about how good the world actually is. that's why i started working on this with saju.
+          that got me thinking about how many people have been kind to me, every day, my whole life. there are so many small moments of kindness around us that we just miss them. we're moving too fast. we're not paying attention. we're not stopping to think about how good the world actually is. that's why i started working on this with <XLink href="https://x.com/apraveen494">saju</XLink>. to collect those moments. to share them.
         </p>
 
         <p className={pCls}>here's how it works:</p>
@@ -53,34 +53,18 @@ export default function AboutPage() {
         </ol>
 
         <p className={pCls}>
-          so a lot of my friends and users started asking what's the point of this platform?
+          that's it. no likes, no comments. you can save the ones that stay with you, and see everything you've posted when you log back in.
         </p>
 
-        <p className={pCls}>it has two purposes:</p>
-
-        <ol className="flex flex-col gap-4 pl-1">
-          {[
-            'spread love',
-            'spread a lot of love through kindness',
-          ].map((item, i) => (
-            <li key={i} className="flex gap-4">
-              <span className="font-serif text-[19px] text-[var(--ink-faint)] shrink-0 w-5">{i + 1}.</span>
-              <p className={pCls}>{item}</p>
-            </li>
-          ))}
-        </ol>
-
         <p className={pCls}>
-          that's it. no likes, no comments. you can save the ones you liked, and see everything you've posted when you log back in. i didn't build this to keep you hooked. i don't want you to feel guilty after using this. i built it so you leave feeling grateful. feeling like the world is a little nicer than you thought. because it is. go spread some of that around. peace.
+          i didn't build this to keep you hooked. i don't want you to feel guilty after using this. i built it so you leave feeling grateful. feeling like the world is a little nicer than you thought. because it is. go spread some of that around. peace.
         </p>
 
-        <p className={pCls}>— daniel and saju</p>
-
         <p className={pCls}>
-          follow us on instagram:{' '}
-          <XLink href="https://www.instagram.com/the.kindness.wall?igsh=M3FzNnpoMnJoaTh6">
-            @the.kindness.wall
-          </XLink>
+          —{' '}
+          <XLink href="https://x.com/DanielPraburaj">daniel</XLink>
+          {' '}and{' '}
+          <XLink href="https://x.com/apraveen494">saju</XLink>
         </p>
       </div>
 
