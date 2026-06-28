@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { getSession, type Session } from '@/lib/session'
+import { getSession, clearSession, type Session } from '@/lib/session'
 import Feed from './Feed'
 import PostModal from './PostModal'
 import BottomNav from './BottomNav'
@@ -114,17 +114,30 @@ export default function WallClient({ initialMoments }: { initialMoments: Moment[
       )}
 
       {view === 'mine' && (
-        <SimpleList
-          moments={mineMoments}
-          session={session}
-          savedIds={savedIds}
-          onSaveToggle={handleSaveToggle}
-          onAuthRequired={handleAuthRequired}
-          emptyMessage="you haven't posted anything yet"
-          showMineActions
-          onEdit={setEditMoment}
-          onDelete={(id) => setMineMoments(prev => prev.filter(m => m.id !== id))}
-        />
+        <>
+          {mineMoments.length === 0 ? (
+            <MineEmptyState />
+          ) : (
+            <SimpleList
+              moments={mineMoments}
+              session={session}
+              savedIds={savedIds}
+              onSaveToggle={handleSaveToggle}
+              onAuthRequired={handleAuthRequired}
+              showMineActions
+              onEdit={setEditMoment}
+              onDelete={(id) => setMineMoments(prev => prev.filter(m => m.id !== id))}
+            />
+          )}
+          <div className="text-center mt-12 pb-2">
+            <button
+              onClick={() => { clearSession(); window.location.href = '/' }}
+              className="text-xs text-[var(--ink-faint)] hover:text-[var(--ink)] transition-colors"
+            >
+              sign out
+            </button>
+          </div>
+        </>
       )}
 
       {view === 'kept' && (
@@ -134,7 +147,6 @@ export default function WallClient({ initialMoments }: { initialMoments: Moment[
           savedIds={savedIds}
           onSaveToggle={handleSaveToggle}
           onAuthRequired={handleAuthRequired}
-          emptyMessage="nothing saved yet"
         />
       )}
 
@@ -202,13 +214,39 @@ export default function WallClient({ initialMoments }: { initialMoments: Moment[
   )
 }
 
+function MineEmptyState() {
+  return (
+    <div className="flex flex-col items-center justify-center text-center px-6 py-20">
+      <svg width="52" height="48" viewBox="0 0 52 48" fill="none" xmlns="http://www.w3.org/2000/svg" className="mb-7 opacity-80">
+        <path
+          d="M26 44C26 44 4 30.5 4 15.5C4 9.4 8.9 4.5 15 4.5C19 4.5 22.5 6.5 25 9.5C27.5 6.5 31 4.5 37 4.5C43.1 4.5 48 9.4 48 15.5C48 30.5 26 44 26 44Z"
+          stroke="#c2674c"
+          strokeWidth="2.2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+      <p className="font-serif text-[19px] leading-[1.65] text-[var(--ink-soft)] mb-8">
+        you haven't shared anything yet.<br />
+        when you're ready, we're here.
+      </p>
+      <Link
+        href="/share"
+        className="press text-white font-semibold px-6 py-3.5 rounded-full text-[14px]"
+        style={{ background: 'linear-gradient(135deg, #cf7152, #b85a3e)' }}
+      >
+        share your first moment
+      </Link>
+    </div>
+  )
+}
+
 function SimpleList({
   moments,
   session,
   savedIds,
   onSaveToggle,
   onAuthRequired,
-  emptyMessage,
   showMineActions = false,
   onEdit,
   onDelete,
@@ -218,13 +256,12 @@ function SimpleList({
   savedIds: Set<string>
   onSaveToggle: (id: string, saved: boolean) => void
   onAuthRequired: () => void
-  emptyMessage: string
   showMineActions?: boolean
   onEdit?: (moment: Moment) => void
   onDelete?: (id: string) => void
 }) {
   if (moments.length === 0) {
-    return <p className="text-center text-stone-400 text-sm py-20">{emptyMessage}</p>
+    return <p className="text-center text-stone-400 text-sm py-20">nothing saved yet</p>
   }
   return (
     <div className="flex flex-col gap-5">

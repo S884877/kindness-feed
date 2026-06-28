@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { getSession } from '@/lib/session'
 
@@ -30,12 +31,24 @@ function randomUsername() {
   return `kinduser_${digits}`
 }
 
+function ShareIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8" />
+      <polyline points="16 6 12 2 8 6" />
+      <line x1="12" y1="2" x2="12" y2="15" />
+    </svg>
+  )
+}
+
 export default function SharePage() {
   const [kindness, setKindness] = useState('')
   const [feeling, setFeeling] = useState('')
   const [location, setLocation] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [submitted, setSubmitted] = useState(false)
+  const [copied, setCopied] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
@@ -57,7 +70,6 @@ export default function SharePage() {
       feeling: feeling.trim(),
       posted_by: randomUsername(),
       location: location.trim() || null,
-
     }
     if (session?.id) insert.user_id = session.id
 
@@ -70,7 +82,55 @@ export default function SharePage() {
     }
 
     router.refresh()
-    router.push('/')
+    setLoading(false)
+    setSubmitted(true)
+  }
+
+  async function handlePassItOn() {
+    try {
+      await navigator.clipboard.writeText(window.location.origin)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2500)
+    } catch {}
+  }
+
+  if (submitted) {
+    return (
+      <div className="feed-frame px-5 flex flex-col items-center justify-center text-center" style={{ minHeight: '55vh' }}>
+        <p className="font-serif text-[24px] leading-[1.5] text-[var(--ink)] mb-2">
+          your moment is on the wall. 🤍
+        </p>
+        <p className="font-serif text-[18px] leading-[1.6] text-[var(--ink-soft)] mb-10">
+          feel free to pass it on.
+        </p>
+
+        <div className="relative">
+          <button
+            onClick={handlePassItOn}
+            className="press flex items-center gap-2 text-white font-semibold px-6 py-3.5 rounded-full text-[15px]"
+            style={{ background: 'linear-gradient(135deg, #cf7152, #b85a3e)' }}
+          >
+            <ShareIcon />
+            pass it on
+          </button>
+          {copied && (
+            <span
+              className="absolute -top-10 left-1/2 -translate-x-1/2 bg-[var(--ink)] text-white text-xs px-3 py-1.5 rounded-lg whitespace-nowrap"
+              style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
+            >
+              link copied
+            </span>
+          )}
+        </div>
+
+        <Link
+          href="/"
+          className="mt-6 text-sm text-[var(--ink-faint)] hover:text-[var(--ink)] transition-colors"
+        >
+          back to the wall
+        </Link>
+      </div>
+    )
   }
 
   const fieldCls = 'w-full border border-[var(--line)] rounded-2xl px-4 py-3.5 text-[var(--ink)] bg-[#fffdf9] placeholder:text-[var(--ink-faint)]/60 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/40 focus:border-[var(--accent)]/40 transition text-[15px] leading-relaxed'
