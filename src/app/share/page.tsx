@@ -239,8 +239,12 @@ export default function SharePage() {
 
   return (
     <div className="feed-frame px-5">
-      <p className="font-serif text-[22px] leading-[1.4] text-[var(--ink)] mb-8">
+      <p className="font-serif text-[22px] leading-[1.4] text-[var(--ink)] mb-5">
         what act of kindness did someone show you?
+      </p>
+
+      <p className="text-[13px] leading-[1.6] text-[var(--ink-faint)] mb-8 bg-[#f7f0e8] rounded-xl px-4 py-3">
+        we encourage you not to use AI to write this. it's fine if it has mistakes. your post is anonymous — no one's going to judge you.
       </p>
 
       <form onSubmit={handleSubmit} className="flex flex-col gap-6">
