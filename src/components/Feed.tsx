@@ -124,12 +124,16 @@ const NUDGE_PROMPTS = [
 async function fetchMoments(supabase: ReturnType<typeof createClient>, from: number) {
   const { data, error } = await supabase
     .from('moments')
-    .select(COLUMNS)
+    .select(`${COLUMNS}, saved_moments(count)`)
     .order('created_at', { ascending: false })
     .range(from, from + PAGE_SIZE - 1)
   if (error) console.error('fetchMoments error:', error)
   if (error || !data) return []
-  return data as Moment[]
+  return (data as any[]).sort((a, b) => {
+    const ac = a.saved_moments?.[0]?.count ?? 0
+    const bc = b.saved_moments?.[0]?.count ?? 0
+    return bc - ac
+  }) as Moment[]
 }
 
 function NudgeCard({ onShare }: { onShare: () => void }) {

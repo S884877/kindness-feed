@@ -153,6 +153,16 @@ export default function MomentCard({
           {moment.feeling}
         </p>
 
+        {moment.location && (
+          <p className="mt-3 text-[12px] text-[var(--ink-faint)] flex items-center gap-1">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z"/>
+              <circle cx="12" cy="10" r="3"/>
+            </svg>
+            {moment.location}
+          </p>
+        )}
+
         {moment.image_url && (
           <div className="mt-5 -mx-7">
             <img
@@ -170,8 +180,10 @@ export default function MomentCard({
         <button
           onClick={handleSave}
           disabled={saveBusy}
-          className="press flex items-center gap-2 text-[13px] font-medium rounded-full px-4 py-2 transition-colors disabled:opacity-60"
-          style={saved ? { color: 'var(--accent)', backgroundColor: '#f3e7df' } : { color: 'var(--ink-soft)' }}
+          className="press flex items-center gap-2 text-[13px] font-medium rounded-full px-4 py-2 transition-all disabled:opacity-60"
+          style={saved
+            ? { color: '#b85a3e', backgroundColor: '#f0d5c4', border: '1.5px solid #d4835e', fontWeight: 600 }
+            : { color: 'var(--ink-soft)', border: '1.5px solid transparent' }}
         >
           {saved ? <BookmarkFilled /> : <BookmarkOutline />}
           <span>save</span>
