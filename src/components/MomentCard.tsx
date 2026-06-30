@@ -24,18 +24,18 @@ function relativeTime(dateStr: string): string {
   return `${years} year${years === 1 ? '' : 's'} ago`
 }
 
-function HeartOutline() {
+function BookmarkOutline() {
   return (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
     </svg>
   )
 }
 
-function HeartFilled() {
+function BookmarkFilled() {
   return (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
     </svg>
   )
 }
@@ -93,6 +93,11 @@ export default function MomentCard({
       if (error) console.error('save error:', error)
       setSaved(true)
       onSaveToggle?.(moment.id, true)
+      fetch('/api/notify-save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ moment_id: moment.id }),
+      }).catch(() => {})
     }
     setSaveBusy(false)
   }
@@ -168,7 +173,7 @@ export default function MomentCard({
           className="press flex items-center gap-2 text-[13px] font-medium rounded-full px-4 py-2 transition-colors disabled:opacity-60"
           style={saved ? { color: 'var(--accent)', backgroundColor: '#f3e7df' } : { color: 'var(--ink-soft)' }}
         >
-          {saved ? <HeartFilled /> : <HeartOutline />}
+          {saved ? <BookmarkFilled /> : <BookmarkOutline />}
           <span>save</span>
         </button>
 

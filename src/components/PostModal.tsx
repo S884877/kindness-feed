@@ -1,9 +1,109 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { Moment } from '@/lib/types'
+
+interface NominatimResult {
+  place_id: number
+  display_name: string
+  address: {
+    city?: string
+    town?: string
+    village?: string
+    hamlet?: string
+    county?: string
+    state?: string
+    country?: string
+  }
+}
+
+function cityLabel(r: NominatimResult): string {
+  const place = r.address.city || r.address.town || r.address.village || r.address.hamlet || r.display_name.split(',')[0]
+  const region = r.address.state || r.address.county || ''
+  const country = r.address.country || ''
+  return [place, region, country].filter(Boolean).join(', ')
+}
+
+function LocationInput({ value, onChange, fieldCls }: { value: string; onChange: (v: string) => void; fieldCls: string }) {
+  const [query, setQuery] = useState(value)
+  const [results, setResults] = useState<NominatimResult[]>([])
+  const [open, setOpen] = useState(false)
+  const [fetching, setFetching] = useState(false)
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const wrapper = useRef<HTMLDivElement>(null)
+
+  useEffect(() => { setQuery(value) }, [value])
+
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (wrapper.current && !wrapper.current.contains(e.target as Node)) setOpen(false)
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const q = e.target.value
+    setQuery(q)
+    onChange('')
+    if (timer.current) clearTimeout(timer.current)
+    if (q.trim().length < 2) { setResults([]); setOpen(false); return }
+    timer.current = setTimeout(async () => {
+      setFetching(true)
+      try {
+        const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&addressdetails=1&limit=6&featuretype=settlement`
+        const res = await fetch(url, { headers: { 'Accept-Language': 'en' } })
+        const data: NominatimResult[] = await res.json()
+        setResults(data)
+        setOpen(data.length > 0)
+      } catch {}
+      setFetching(false)
+    }, 400)
+  }
+
+  function pick(r: NominatimResult) {
+    const label = cityLabel(r)
+    setQuery(label)
+    onChange(label)
+    setResults([])
+    setOpen(false)
+  }
+
+  return (
+    <div ref={wrapper} className="relative">
+      <input
+        type="text"
+        value={query}
+        onChange={handleChange}
+        onFocus={() => results.length > 0 && setOpen(true)}
+        required
+        placeholder="start typing your city, town or village…"
+        className={fieldCls}
+        autoComplete="off"
+      />
+      {fetching && (
+        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[12px] text-[var(--ink-faint)]">searching…</span>
+      )}
+      {open && (
+        <ul className="absolute z-20 mt-1 w-full bg-[#fffdf9] border border-[var(--line)] rounded-2xl shadow-lg overflow-hidden">
+          {results.map((r) => (
+            <li key={r.place_id}>
+              <button
+                type="button"
+                onMouseDown={() => pick(r)}
+                className="w-full text-left px-4 py-3 text-[14px] text-[var(--ink)] hover:bg-[#f3ece2] transition-colors leading-snug"
+              >
+                {cityLabel(r)}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  )
+}
 
 const MAX_WORDS = 350
 
@@ -152,22 +252,15 @@ export default function PostModal({
           </div>
 
           <div>
-            <label className={labelCls}>where from? (optional)</label>
-            <input
-              type="text"
-              value={location}
-              onChange={(e) => setLocation(e.target.value)}
-              maxLength={100}
-              placeholder="your city or town"
-              className={fieldCls}
-            />
+            <label className={labelCls}>where from?</label>
+            <LocationInput value={location} onChange={setLocation} fieldCls={fieldCls} />
           </div>
 
           {error && <p className="text-[var(--accent)] text-sm">{error}</p>}
 
           <button
             type="submit"
-            disabled={loading || !kindness.trim() || !feeling.trim()}
+            disabled={loading || !kindness.trim() || !feeling.trim() || !location.trim()}
             className="press text-white font-semibold py-3.5 rounded-2xl transition-all text-[15px] disabled:opacity-40"
             style={{ background: 'linear-gradient(135deg, #cf7152, #b85a3e)' }}
           >
