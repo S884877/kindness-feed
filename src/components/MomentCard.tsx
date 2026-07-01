@@ -24,18 +24,18 @@ function relativeTime(dateStr: string): string {
   return `${years} year${years === 1 ? '' : 's'} ago`
 }
 
-function HeartOutline() {
+function BookmarkOutline() {
   return (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
     </svg>
   )
 }
 
-function HeartFilled() {
+function BookmarkFilled() {
   return (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+      <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
     </svg>
   )
 }
@@ -93,6 +93,11 @@ export default function MomentCard({
       if (error) console.error('save error:', error)
       setSaved(true)
       onSaveToggle?.(moment.id, true)
+      fetch('/api/notify-save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ moment_id: moment.id }),
+      }).catch(() => {})
     }
     setSaveBusy(false)
   }
@@ -140,13 +145,23 @@ export default function MomentCard({
           <span className="text-xs text-[var(--ink-faint)]">{relativeTime(moment.created_at)}</span>
         </div>
 
-        <p className="font-serif text-[22px] leading-[1.4] text-[var(--ink)] mb-4">
+        <p className="font-serif text-[18px] leading-[1.4] text-[var(--ink)] mb-4">
           {moment.kindness}
         </p>
 
-        <p className="font-serif italic text-[17px] leading-[1.55] text-[var(--ink-soft)] mb-6">
+        <p className="font-serif italic text-[15px] leading-[1.55] text-[var(--ink-soft)]">
           {moment.feeling}
         </p>
+
+        {moment.location && (
+          <p className="mt-3 text-[12px] text-[var(--ink-faint)] flex items-center gap-1">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 10c0 7-9 13-9 13S3 17 3 10a9 9 0 1 1 18 0z"/>
+              <circle cx="12" cy="10" r="3"/>
+            </svg>
+            {moment.location}
+          </p>
+        )}
 
         {moment.image_url && (
           <div className="-mx-7 mb-0">
@@ -165,11 +180,13 @@ export default function MomentCard({
         <button
           onClick={handleSave}
           disabled={saveBusy}
-          className="press flex items-center gap-2 text-[13px] font-medium rounded-full px-4 py-2 transition-colors disabled:opacity-60"
-          style={saved ? { color: 'var(--accent)', backgroundColor: '#f3e7df' } : { color: 'var(--ink-soft)' }}
+          className="press flex items-center gap-2 text-[13px] font-medium rounded-full px-4 py-2 transition-all disabled:opacity-60"
+          style={saved
+            ? { color: '#b85a3e', backgroundColor: '#f0d5c4', border: '1.5px solid #d4835e', fontWeight: 600 }
+            : { color: 'var(--ink-soft)', border: '1.5px solid transparent' }}
         >
-          {saved ? <HeartFilled /> : <HeartOutline />}
-          <span>hold onto this</span>
+          {saved ? <BookmarkFilled /> : <BookmarkOutline />}
+          <span>save</span>
         </button>
 
         <div className="flex flex-col items-end gap-1">
@@ -179,7 +196,7 @@ export default function MomentCard({
             className="press flex items-center gap-1.5 text-[13px] text-[var(--ink-faint)] hover:text-[var(--ink)] transition-colors py-1 disabled:opacity-60"
           >
             <ShareIcon />
-            <span>{sharing ? 'creating image…' : 'pass it on'}</span>
+            <span>{sharing ? 'creating image…' : 'share'}</span>
           </button>
           {copied && (
             <span className="text-[11px] text-[var(--ink-faint)]">link copied</span>

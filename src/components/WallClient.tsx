@@ -22,12 +22,21 @@ export default function WallClient({ initialMoments }: { initialMoments: Moment[
   const [mineMoments, setMineMoments] = useState<Moment[]>([])
   const [keptMoments, setKeptMoments] = useState<Moment[]>([])
   const [showAuthGate, setShowAuthGate] = useState(false)
+  const [showNudgePopup, setShowNudgePopup] = useState(false)
   const [editMoment, setEditMoment] = useState<Moment | null>(null)
   const supabase = createClient()
   const router = useRouter()
 
   useEffect(() => {
-    setSession(getSession())
+    const s = getSession()
+    setSession(s)
+    if (!s && !sessionStorage.getItem('nudge_shown')) {
+      const t = setTimeout(() => {
+        setShowNudgePopup(true)
+        sessionStorage.setItem('nudge_shown', '1')
+      }, 10000)
+      return () => clearTimeout(t)
+    }
   }, [])
 
   useEffect(() => {
@@ -148,6 +157,44 @@ export default function WallClient({ initialMoments }: { initialMoments: Moment[
           onSaveToggle={handleSaveToggle}
           onAuthRequired={handleAuthRequired}
         />
+      )}
+
+      {showNudgePopup && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center px-6"
+          style={{ background: 'rgba(44,38,32,0.25)', backdropFilter: 'blur(4px)' }}
+          onClick={() => setShowNudgePopup(false)}
+        >
+          <div
+            className="relative bg-[#fffdf9] rounded-2xl px-8 py-7 text-center max-w-xs w-full"
+            style={{ boxShadow: '0 16px 48px -12px rgba(60,45,30,0.28), 0 4px 12px rgba(60,45,30,0.08)' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setShowNudgePopup(false)}
+              className="absolute top-4 right-4 text-[var(--ink-faint)] hover:text-[var(--ink)] transition-colors text-lg leading-none"
+              aria-label="close"
+            >
+              ×
+            </button>
+            <p className="font-serif text-[20px] text-[var(--ink)] mb-2">post something to the wall</p>
+            <p className="text-sm text-[var(--ink-faint)] mb-6">share a moment of kindness someone showed you.</p>
+            <Link
+              href="/login"
+              className="block text-white font-semibold py-3 rounded-xl text-[15px] text-center"
+              style={{ background: 'linear-gradient(135deg, #cf7152, #b85a3e)' }}
+              onClick={() => setShowNudgePopup(false)}
+            >
+              get started
+            </Link>
+            <button
+              onClick={() => setShowNudgePopup(false)}
+              className="mt-3 text-sm text-[var(--ink-faint)] hover:text-[var(--ink)] transition-colors"
+            >
+              maybe later
+            </button>
+          </div>
+        </div>
       )}
 
       {showAuthGate && (

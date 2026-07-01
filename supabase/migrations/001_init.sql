@@ -37,8 +37,8 @@ create trigger on_auth_user_created
 create table if not exists public.moments (
   id uuid default gen_random_uuid() primary key,
   user_id uuid references public.users(id) on delete cascade not null,
-  kindness text not null check (char_length(kindness) between 1 and 280),
-  feeling text not null check (char_length(feeling) between 1 and 280),
+  kindness text not null check (char_length(kindness) between 1 and 1500),
+  feeling text not null check (char_length(feeling) between 1 and 750),
   created_at timestamptz default now()
 );
 

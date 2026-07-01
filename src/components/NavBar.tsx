@@ -15,12 +15,20 @@ export default function NavBar() {
         <Link href="/" className="font-serif text-[var(--ink)] text-xl tracking-tight">
           the kindness wall
         </Link>
-        <Link
-          href="/about"
-          className="text-xs text-[var(--ink-faint)] hover:text-[var(--ink)] transition-colors"
-        >
-          how this started
-        </Link>
+        <div className="flex items-center gap-5">
+          <Link
+            href="/wall"
+            className="text-xs text-[var(--ink-faint)] hover:text-[var(--ink)] transition-colors"
+          >
+            wall
+          </Link>
+          <Link
+            href="/about"
+            className="text-xs text-[var(--ink-faint)] hover:text-[var(--ink)] transition-colors"
+          >
+            how this started
+          </Link>
+        </div>
       </nav>
     </header>
   )
