@@ -13,7 +13,7 @@ async function getKey(secret: string): Promise<CryptoKey> {
 export async function signAdminToken(secret: string): Promise<string> {
   const key = await getKey(secret)
   const sig = await crypto.subtle.sign('HMAC', key, new TextEncoder().encode(TOKEN_DATA))
-  return Buffer.from(sig).toString('base64')
+  return btoa(String.fromCharCode(...new Uint8Array(sig)))
 }
 
 export async function verifyAdminToken(token: string, secret: string): Promise<boolean> {
