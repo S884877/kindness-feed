@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getSession, type Session } from '@/lib/session'
@@ -32,13 +32,16 @@ export default function ChainTab({ initialRef }: { initialRef?: string }) {
   // chain, so the visualization never waits on an auth check.
   const [chainState, setChainState] = useState<ChainState>('A')
   const [acts, setActs] = useState<ChainAct[]>([])
-  const [expandAbove, setExpandAbove] = useState(false)
-  const [expandBelow, setExpandBelow] = useState(false)
+  const [extraAbove, setExtraAbove] = useState(0)
+  const [extraBelow, setExtraBelow] = useState(0)
   const [showAuthSheet, setShowAuthSheet] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [parentActToken, setParentActToken] = useState<string | undefined>(undefined)
   const [inviteCopied, setInviteCopied] = useState(false)
+  const [userCardVisible, setUserCardVisible] = useState(true)
   const router = useRouter()
+  const userCardRef = useRef<HTMLDivElement>(null)
+  const hasAutoScrolled = useRef(false)
 
   useEffect(() => {
     const s = getSession()
@@ -154,11 +157,47 @@ export default function ChainTab({ initialRef }: { initialRef?: string }) {
   let hasHiddenBelow = false
 
   if (chainState === 'C' && userIdx >= 0) {
-    const start = expandAbove ? 0 : Math.max(0, userIdx - WINDOW)
-    const end = expandBelow ? acts.length : Math.min(acts.length, userIdx + WINDOW + 1)
+    const start = Math.max(0, userIdx - WINDOW - extraAbove)
+    const end = Math.min(acts.length, userIdx + WINDOW + 1 + extraBelow)
     hasHiddenAbove = start > 0
     hasHiddenBelow = end < acts.length
     displayActs = acts.slice(start, end)
+  }
+
+  // scrollIntoView's "center" doesn't know about our fixed header/bottom bar,
+  // so it can land the card half-hidden behind them — scroll manually instead,
+  // resting the card just under the fixed header.
+  function scrollToUserCard(smooth: boolean) {
+    const el = userCardRef.current
+    if (!el) return
+    const HEADER_OFFSET = 100
+    const y = el.getBoundingClientRect().top + window.scrollY - HEADER_OFFSET
+    window.scrollTo({ top: Math.max(0, y), behavior: smooth ? 'smooth' : 'auto' })
+  }
+
+  // land on "you are here" as soon as it's on the page — no manual scrolling
+  // needed even when there's a long chain above it
+  useEffect(() => {
+    if (chainState !== 'C' || userIdx < 0 || hasAutoScrolled.current) return
+    if (!userCardRef.current) return
+    hasAutoScrolled.current = true
+    scrollToUserCard(true)
+  }, [chainState, userIdx, displayActs.length])
+
+  // keep a "jump to you" affordance in reach once the card scrolls off-screen
+  useEffect(() => {
+    if (chainState !== 'C' || userIdx < 0 || !userCardRef.current) return
+    const el = userCardRef.current
+    const observer = new IntersectionObserver(
+      ([entry]) => setUserCardVisible(entry.isIntersecting),
+      { rootMargin: '-100px 0px -140px 0px' }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [chainState, userIdx, displayActs.length])
+
+  function jumpToMe() {
+    scrollToUserCard(true)
   }
 
   const buttonLabel =
@@ -186,7 +225,7 @@ export default function ChainTab({ initialRef }: { initialRef?: string }) {
 
       {hasHiddenAbove && (
         <button
-          onClick={() => setExpandAbove(true)}
+          onClick={() => setExtraAbove(n => n + WINDOW)}
           className="w-full text-center text-[12px] font-semibold mb-4"
           style={{ color: 'var(--accent)' }}
         >
@@ -228,7 +267,7 @@ export default function ChainTab({ initialRef }: { initialRef?: string }) {
               </div>
 
               {/* card */}
-              <div className="flex-1" style={{ marginBottom: 20 }}>
+              <div className="flex-1" style={{ marginBottom: 20 }} ref={isUser ? userCardRef : undefined}>
                 <div
                   className="relative"
                   style={{
@@ -281,11 +320,28 @@ export default function ChainTab({ initialRef }: { initialRef?: string }) {
 
       {hasHiddenBelow && (
         <button
-          onClick={() => setExpandBelow(true)}
+          onClick={() => setExtraBelow(n => n + WINDOW)}
           className="w-full text-center text-[12px] font-semibold mt-4"
           style={{ color: 'var(--accent)' }}
         >
           view more ↓
+        </button>
+      )}
+
+      {/* jump back to "you are here" once it's scrolled out of view */}
+      {chainState === 'C' && userIdx >= 0 && !userCardVisible && (
+        <button
+          onClick={jumpToMe}
+          className="press fixed left-1/2 z-10 text-[12px] font-semibold px-4 py-2 rounded-full"
+          style={{
+            bottom: '148px',
+            transform: 'translateX(-50%)',
+            background: '#2c2620',
+            color: '#fffdf9',
+            boxShadow: '0 4px 16px rgba(60,45,30,0.25)',
+          }}
+        >
+          ↕ jump to you
         </button>
       )}
 
