@@ -61,10 +61,10 @@ export default function ChainHome({
       {!parentToken && (
         <div className="text-center mt-10 mb-10">
           <p className="font-serif text-[19px] leading-[1.6] text-[var(--ink)] mb-1">
-            pay it forward, one act at a time.
+            hey there, did something kind lately?
           </p>
           <p className="text-[14px] leading-[1.7] text-[var(--ink-faint)] max-w-sm mx-auto mt-3">
-            post an act of kindness, get a link, share it. whoever posts through your link becomes the next person in your chain — and their link starts a new branch. we're trying to reach 1,000,000 acts this week.
+            tell us about it and invite your friends to join your chain! we are on a collective mission to ignite 1 million acts of kindness this week. together, let's see just how far your single act of good can travel.
           </p>
         </div>
       )}
@@ -86,10 +86,10 @@ export default function ChainHome({
             <p className="text-center text-[14px] text-[var(--ink-faint)] mb-5">this link couldn't be found — but you can still start your own chain below.</p>
           )}
           <p className="font-serif text-[18px] leading-[1.5] text-[var(--ink)] text-center mb-2">
-            you've been invited to continue this chain.
+            you've been invited to join thekindnesscollective chain.
           </p>
           <p className="text-[13px] text-[var(--ink-faint)] text-center">
-            add your own act of kindness to keep it going.{' '}
+            share something kind you did today, keep the chain moving.{' '}
             {parentPost && (
               <Link href={`/chain/${parentPost.chain_id}`} className="text-[var(--accent)] hover:underline">
                 see the whole chain
