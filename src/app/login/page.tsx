@@ -1,36 +1,44 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import { createClient } from '@/lib/supabase/client'
+import { Suspense, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { saveSession } from '@/lib/session'
 import Link from 'next/link'
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={null}>
+      <LoginForm />
+    </Suspense>
+  )
+}
+
+function LoginForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const next = searchParams.get('next')
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
     setError('')
-    const supabase = createClient()
-    const { data, error: err } = await supabase
-      .from('accounts')
-      .select('id, email')
-      .eq('email', email.trim().toLowerCase())
-      .eq('password', password)
-      .single()
-    if (err || !data) {
-      setError('incorrect email or password')
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password }),
+    })
+    const data = await res.json()
+    if (!res.ok) {
+      setError(data.error || 'incorrect email or password')
       setLoading(false)
       return
     }
     saveSession({ id: data.id, email: data.email })
-    router.push('/')
+    router.push(next || '/')
   }
 
   const fieldCls =
@@ -72,7 +80,7 @@ export default function LoginPage() {
 
         <p className="text-center text-[var(--ink-faint)] text-sm mt-6">
           don&apos;t have an account?{' '}
-          <Link href="/signup" className="text-[var(--accent)] hover:underline">
+          <Link href={next ? `/signup?next=${encodeURIComponent(next)}` : '/signup'} className="text-[var(--accent)] hover:underline">
             sign up
           </Link>
         </p>
