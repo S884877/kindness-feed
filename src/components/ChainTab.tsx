@@ -93,22 +93,24 @@ export default function ChainTab({ initialRef }: { initialRef?: string }) {
     }
 
     if (s) {
-      // State C — user's own chain
+      // State C — the global chain, centered on the user's own post. Uses
+      // the same chronological list everyone sees (not just their invite
+      // branch), so the people who posted right before/after them stay
+      // visible once they sign in.
       const { data: myAct } = await supabase
         .from('chain_acts')
-        .select('chain_id')
+        .select('id')
         .eq('user_id', s.id)
-        .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle()
 
-      if (myAct?.chain_id) {
-        const { data: chain } = await supabase
+      if (myAct) {
+        const { data: global } = await supabase
           .from('chain_acts')
           .select('*')
-          .eq('chain_id', myAct.chain_id)
-          .order('depth', { ascending: true })
-        setActs((chain ?? []) as ChainAct[])
+          .order('created_at', { ascending: true })
+          .limit(500)
+        setActs((global ?? []) as ChainAct[])
         setChainState('C')
         return
       }
@@ -136,7 +138,7 @@ export default function ChainTab({ initialRef }: { initialRef?: string }) {
 
   async function handleInvite() {
     if (!session) return
-    const myAct = acts.find(a => a.user_id === session.id)
+    const myAct = [...acts].reverse().find(a => a.user_id === session.id)
     const shareUrl = myAct
       ? `${window.location.origin}/?ref=${myAct.share_token}`
       : `${window.location.origin}/join?ref=${session.id}`
@@ -148,20 +150,23 @@ export default function ChainTab({ initialRef }: { initialRef?: string }) {
     } catch {}
   }
 
+  // if the user has posted more than once, "you are here" marks their most
+  // recent post — mirrors the order acts appear in (oldest to newest)
   const userIdx = chainState === 'C' && session
-    ? acts.findIndex(a => a.user_id === session.id)
+    ? acts.map(a => a.user_id).lastIndexOf(session.id)
     : -1
 
   let displayActs = acts
   let hasHiddenAbove = false
   let hasHiddenBelow = false
+  let windowStart = 0
 
   if (chainState === 'C' && userIdx >= 0) {
-    const start = Math.max(0, userIdx - WINDOW - extraAbove)
+    windowStart = Math.max(0, userIdx - WINDOW - extraAbove)
     const end = Math.min(acts.length, userIdx + WINDOW + 1 + extraBelow)
-    hasHiddenAbove = start > 0
+    hasHiddenAbove = windowStart > 0
     hasHiddenBelow = end < acts.length
-    displayActs = acts.slice(start, end)
+    displayActs = acts.slice(windowStart, end)
   }
 
   // scrollIntoView's "center" doesn't know about our fixed header/bottom bar,
@@ -205,6 +210,10 @@ export default function ChainTab({ initialRef }: { initialRef?: string }) {
     chainState === 'B' ? 'join this chain' :
     inviteCopied ? 'link copied!' : 'invite others to this chain'
 
+  const headerLabel =
+    chainState === 'A' ? 'the global chain' :
+    chainState === 'B' ? 'this chain' : 'your chain'
+
   return (
     <div className="pb-36">
       <div className="mb-8 text-center">
@@ -220,7 +229,7 @@ export default function ChainTab({ initialRef }: { initialRef?: string }) {
       </div>
 
       <p className="text-[11px] font-semibold text-[var(--ink-faint)] uppercase tracking-[0.08em] mb-6">
-        your chain
+        {headerLabel}
       </p>
 
       {hasHiddenAbove && (
@@ -234,8 +243,8 @@ export default function ChainTab({ initialRef }: { initialRef?: string }) {
       )}
 
       <div>
-        {displayActs.map((a) => {
-          const isUser = chainState === 'C' && !!session && a.user_id === session.id
+        {displayActs.map((a, i) => {
+          const isUser = chainState === 'C' && windowStart + i === userIdx
           const dotSize = isUser ? 16 : 12
 
           return (
