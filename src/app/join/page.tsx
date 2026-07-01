@@ -25,7 +25,7 @@ function JoinInner() {
     }
     const session = getSession()
     if (session) {
-      sessionStorage.setItem('chain_ref', ref)
+      localStorage.setItem('chain_ref', ref)
       router.replace('/share')
     }
   }, [ref, router])

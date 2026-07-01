@@ -160,10 +160,10 @@ export default function SharePage() {
     if (!session) { router.replace('/login'); return }
     trackFormStarted(session.id).then(setFormEventId)
 
-    const chainRef = sessionStorage.getItem('chain_ref')
+    const chainRef = localStorage.getItem('chain_ref')
     if (chainRef) {
       setInvitedByUserId(chainRef)
-      sessionStorage.removeItem('chain_ref')
+      localStorage.removeItem('chain_ref')
     }
   }, [router])
 
