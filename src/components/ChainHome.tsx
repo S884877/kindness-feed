@@ -56,16 +56,20 @@ export default function ChainHome({
 
   return (
     <div className="feed-frame px-5">
-      <ChainCounter />
+      {parentToken && <ChainCounter />}
 
       {!parentToken && (
         <div className="text-center mt-10 mb-10">
-          <p className="font-serif text-[19px] leading-[1.6] text-[var(--ink)] mb-1">
-            hey there, did something kind lately?
+          <h1 className="font-serif text-[30px] leading-[1.3] text-[var(--ink)] mb-3">
+            the kindness collective
+          </h1>
+          <p className="font-serif text-[18px] leading-[1.6] text-[var(--ink-soft)] mb-4">
+            hey there, did something nice to someone lately?
           </p>
-          <p className="text-[14px] leading-[1.7] text-[var(--ink-faint)] max-w-sm mx-auto mt-3">
-            tell us about it and invite your friends to join your chain! we are on a collective mission to ignite 1 million acts of kindness this week. together, let's see just how far your single act of good can travel.
+          <p className="text-[14px] leading-[1.7] text-[var(--ink-faint)] max-w-sm mx-auto mb-8">
+            post an act of kindness, get a link, share it. whoever posts through your link becomes the next person in your chain — and their link starts a new branch.
           </p>
+          <ChainCounter />
         </div>
       )}
 

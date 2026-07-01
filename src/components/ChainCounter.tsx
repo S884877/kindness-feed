@@ -27,11 +27,11 @@ export default function ChainCounter() {
 
   return (
     <div className="w-full flex flex-col items-center text-center mb-2">
-      <p className="font-serif text-[15px] text-[var(--ink-faint)] mb-1.5">acts of kindness this week</p>
-      <p className="font-serif text-[40px] leading-none text-[var(--ink)] mb-4 tabular-nums">
+      <p className="font-serif text-[40px] leading-none text-[var(--ink)] tabular-nums">
         {count === null ? '—' : count.toLocaleString()}
         <span className="text-[18px] text-[var(--ink-faint)]"> / {GOAL.toLocaleString()}</span>
       </p>
+      <p className="font-serif text-[14px] text-[var(--ink-faint)] mt-3 mb-4">kind acts and counting.</p>
       <div className="w-full max-w-xs h-2 rounded-full bg-[#efe4d4] overflow-hidden">
         <div
           className="h-full rounded-full transition-all duration-700"
