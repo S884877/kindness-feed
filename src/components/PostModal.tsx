@@ -214,7 +214,7 @@ export default function PostModal({
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-6">
           <div>
-            <label className={labelCls}>what act of kindness did someone show you?</label>
+            <label className={labelCls}>what's something kind that you did today?</label>
             <textarea
               value={kindness}
               onChange={(e) => setKindness(limitWords(e.target.value, MAX_WORDS))}

@@ -244,7 +244,7 @@ export default function SharePage() {
   return (
     <div className="feed-frame px-5">
       <p className="font-serif text-[22px] leading-[1.4] text-[var(--ink)] mb-5">
-        what act of kindness did someone show you?
+        what's something kind that you did today?
       </p>
 
       <p className="text-[13px] leading-[1.6] text-[var(--ink-faint)] mb-8 bg-[#f7f0e8] rounded-xl px-4 py-3">

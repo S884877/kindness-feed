@@ -54,12 +54,12 @@ export default function ChainDashboard({ session }: { session: Session }) {
 
   const origin = typeof window !== 'undefined' ? window.location.origin : ''
   const shareUrl = chainShareUrl(origin, latest.share_token)
-  const message = `i just added a link to a kindness chain. keep it going: ${shareUrl}`
+  const message = `Someone shared an act of kindness and started a chain.\nNow it's your turn. Add your own act and join the chain.\nTogether, we're building 1,000,000 acts this week. Let's go. ${shareUrl}`
 
   return (
     <div>
       <div className="text-center mb-8">
-        <ChainShareMenu shareUrl={shareUrl} message={message} />
+        <ChainShareMenu shareUrl={shareUrl} message={message} userId={session.id} actId={latest.id} />
       </div>
 
       <ChainTree chainId={latest.chain_id} />

@@ -3,7 +3,8 @@
 import { Suspense, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { saveSession } from '@/lib/session'
-import { trackLogin } from '@/lib/metrics'
+import { trackLogin, trackChainSignin } from '@/lib/metrics'
+import { createClient } from '@/lib/supabase/client'
 import Link from 'next/link'
 
 export default function LoginPage() {
@@ -41,6 +42,19 @@ function LoginForm() {
       }
       saveSession({ id: data.id, email: data.email })
       trackLogin(data.id)
+      // if arriving from a chain share link, record the signin
+      if (next) {
+        try {
+          const ref = new URLSearchParams(next.replace(/^[^?]*\??/, '')).get('ref')
+          if (ref) {
+            const sb = createClient()
+            sb.from('chain_acts').select('chain_id, user_id').eq('share_token', ref).single()
+              .then(({ data: act }) => {
+                if (act) trackChainSignin(data.id, (act as any).chain_id, (act as any).user_id)
+              })
+          }
+        } catch {}
+      }
       router.push(next || '/')
     } catch {
       setError('something went wrong. try again.')

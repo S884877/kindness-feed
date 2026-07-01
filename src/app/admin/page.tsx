@@ -116,7 +116,7 @@ export default async function AdminDashboard() {
     supabase.from('chains').select('*', { count: 'exact', head: true }),
     supabase.from('accounts').select('*', { count: 'exact', head: true }),
     supabase.from('share_clicks').select('*', { count: 'exact', head: true }),
-    supabase.from('acts').select('*', { count: 'exact', head: true }),
+    supabase.from('chain_acts').select('*', { count: 'exact', head: true }),
     supabase.from('saved_moments').select('*', { count: 'exact', head: true }),
     supabase.from('moments').select('*', { count: 'exact', head: true }).gte('created_at', todayStr),
     supabase.from('moments').select('*', { count: 'exact', head: true }).gte('created_at', yesterdayStr).lt('created_at', todayStr),

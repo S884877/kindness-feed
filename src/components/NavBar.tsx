@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import NavProfile from './NavProfile'
 
 export default function NavBar() {
   return (
@@ -15,19 +16,22 @@ export default function NavBar() {
         <Link href="/" className="font-serif text-[var(--ink)] text-xl tracking-tight">
           the kindness wall
         </Link>
-        <div className="flex items-center gap-5">
-          <Link
-            href="/wall"
-            className="text-xs text-[var(--ink-faint)] hover:text-[var(--ink)] transition-colors"
-          >
-            wall
-          </Link>
-          <Link
-            href="/about"
-            className="text-xs text-[var(--ink-faint)] hover:text-[var(--ink)] transition-colors"
-          >
-            how this started
-          </Link>
+        <div className="flex flex-col items-end" style={{ gap: '8px' }}>
+          <div className="flex items-center gap-4">
+            <Link
+              href="/onemillionkind"
+              className="text-xs text-[var(--ink-faint)] hover:text-[var(--ink)] transition-colors leading-none"
+            >
+              onemillionkind
+            </Link>
+            <Link
+              href="/about"
+              className="text-xs text-[var(--ink-faint)] hover:text-[var(--ink)] transition-colors leading-none"
+            >
+              how this started
+            </Link>
+          </div>
+          <NavProfile />
         </div>
       </nav>
     </header>

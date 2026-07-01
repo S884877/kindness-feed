@@ -105,8 +105,9 @@ export default function MomentCard({
   async function share() {
     if (!session) { onAuthRequired?.(); return }
     const url = `${window.location.origin}/m/${moment.id}`
+    const inviteMsg = `Someone shared an act of kindness and started a chain.\nNow it's your turn. Add your own act and join the chain.\nTogether, we're building 1,000,000 acts this week. Let's go. ${url}`
     try {
-      await navigator.clipboard.writeText(url)
+      await navigator.clipboard.writeText(inviteMsg)
       setCopied(true)
       setTimeout(() => setCopied(false), 2500)
     } catch {}
@@ -115,7 +116,7 @@ export default function MomentCard({
       const blob = await renderMomentImage(moment)
       const file = new File([blob], 'kindness-moment.png', { type: 'image/png' })
       if (navigator.canShare?.({ files: [file] })) {
-        await navigator.share({ files: [file], title: 'the kindness project' })
+        await navigator.share({ files: [file], text: inviteMsg, title: 'the kindness project' })
       } else {
         const link = document.createElement('a')
         link.href = URL.createObjectURL(blob)
@@ -196,7 +197,7 @@ export default function MomentCard({
             className="press flex items-center gap-1.5 text-[13px] text-[var(--ink-faint)] hover:text-[var(--ink)] transition-colors py-1 disabled:opacity-60"
           >
             <ShareIcon />
-            <span>{sharing ? 'creating image…' : 'share'}</span>
+            <span>{sharing ? 'creating image…' : 'pass it on'}</span>
           </button>
           {copied && (
             <span className="text-[11px] text-[var(--ink-faint)]">link copied</span>

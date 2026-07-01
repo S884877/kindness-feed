@@ -6,6 +6,7 @@ import ChainCounter from './ChainCounter'
 import ChainForm from './ChainForm'
 import ChainDashboard from './ChainDashboard'
 import { getSession, type Session } from '@/lib/session'
+import { trackChainLinkOpen, trackChainSignin } from '@/lib/metrics'
 import type { ChainAct } from '@/lib/chain'
 
 export default function ChainHome({
@@ -19,7 +20,22 @@ export default function ChainHome({
   const [session, setSession] = useState<Session | null | undefined>(undefined)
 
   useEffect(() => {
-    setSession(getSession())
+    const s = getSession()
+    setSession(s)
+
+    if (parentPost) {
+      // track every unique visitor who opens a chain link
+      trackChainLinkOpen(parentPost.chain_id, parentPost.user_id)
+
+      // track signin once per session when a logged-in user arrives via chain link
+      if (s) {
+        const key = `cst_${parentPost.chain_id}`
+        if (!sessionStorage.getItem(key)) {
+          trackChainSignin(s.id, parentPost.chain_id, parentPost.user_id)
+          sessionStorage.setItem(key, '1')
+        }
+      }
+    }
   }, [])
 
   // still checking localStorage on mount — avoid a flash of the wrong state

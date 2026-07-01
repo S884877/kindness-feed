@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { trackShareClick } from '@/lib/metrics'
 
 function ShareGlyph() {
   return (
@@ -14,7 +15,7 @@ function ShareGlyph() {
   )
 }
 
-export default function ChainShareMenu({ shareUrl, message }: { shareUrl: string; message: string }) {
+export default function ChainShareMenu({ shareUrl, message, userId, actId }: { shareUrl: string; message: string; userId?: string; actId?: string }) {
   const [open, setOpen] = useState(false)
   const [copied, setCopied] = useState(false)
   const [note, setNote] = useState('')
@@ -28,11 +29,16 @@ export default function ChainShareMenu({ shareUrl, message }: { shareUrl: string
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
+  function track(platform: 'whatsapp' | 'sms' | 'email' | 'instagram' | 'copy') {
+    if (userId && actId) trackShareClick(userId, actId, platform)
+  }
+
   async function copyLink() {
     try {
-      await navigator.clipboard.writeText(shareUrl)
+      await navigator.clipboard.writeText(message)
       setCopied(true)
       setTimeout(() => setCopied(false), 2500)
+      track('copy')
     } catch {}
   }
 
@@ -40,6 +46,7 @@ export default function ChainShareMenu({ shareUrl, message }: { shareUrl: string
     if (navigator.share) {
       try {
         await navigator.share({ title: 'the kindness wall', text: message, url: shareUrl })
+        track('copy')
       } catch {}
     } else {
       copyLink()
@@ -49,6 +56,7 @@ export default function ChainShareMenu({ shareUrl, message }: { shareUrl: string
 
   async function shareInstagram() {
     await copyLink()
+    track('instagram')
     setNote('link copied — paste it in your instagram bio or DM')
     setTimeout(() => setNote(''), 4000)
   }
@@ -62,7 +70,7 @@ export default function ChainShareMenu({ shareUrl, message }: { shareUrl: string
         className="press flex items-center gap-2 text-white font-semibold px-5 py-3 rounded-full text-[14px]"
         style={{ background: 'linear-gradient(135deg, #cf7152, #b85a3e)' }}
       >
-        <ShareGlyph /> share your link
+        <ShareGlyph /> pass it on
       </button>
 
       {open && (
@@ -75,7 +83,7 @@ export default function ChainShareMenu({ shareUrl, message }: { shareUrl: string
           <a
             href={`https://wa.me/?text=${encodeURIComponent(message)}`}
             target="_blank" rel="noopener noreferrer"
-            onClick={() => setOpen(false)}
+            onClick={() => { track('whatsapp'); setOpen(false) }}
             className={`${itemCls} block`}
           >
             share via whatsapp
@@ -83,7 +91,7 @@ export default function ChainShareMenu({ shareUrl, message }: { shareUrl: string
           <a
             href={`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}&text=${encodeURIComponent(message)}`}
             target="_blank" rel="noopener noreferrer"
-            onClick={() => setOpen(false)}
+            onClick={() => { track('copy'); setOpen(false) }}
             className={`${itemCls} block`}
           >
             share via telegram
@@ -91,7 +99,7 @@ export default function ChainShareMenu({ shareUrl, message }: { shareUrl: string
           <a
             href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(message)}`}
             target="_blank" rel="noopener noreferrer"
-            onClick={() => setOpen(false)}
+            onClick={() => { track('copy'); setOpen(false) }}
             className={`${itemCls} block`}
           >
             share via twitter

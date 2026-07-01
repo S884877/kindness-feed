@@ -30,6 +30,9 @@ export default function WallClient({ initialMoments }: { initialMoments: Moment[
   useEffect(() => {
     const s = getSession()
     setSession(s)
+    if (s && new URLSearchParams(window.location.search).get('view') === 'mine') {
+      setView('mine')
+    }
     if (!s && !sessionStorage.getItem('nudge_shown')) {
       const t = setTimeout(() => {
         setShowNudgePopup(true)
@@ -226,6 +229,27 @@ export default function WallClient({ initialMoments }: { initialMoments: Moment[
           </div>
         </div>
       )}
+
+      {/* floating share FAB — sits directly above the Listen button in Feed */}
+      <button
+        onClick={() => { if (!session) { setShowAuthGate(true); return } router.push('/share') }}
+        aria-label="share a moment"
+        className="fixed z-30 flex items-center justify-center rounded-full active:scale-95 transition-transform"
+        style={{
+          bottom: '148px',
+          right: '20px',
+          width: '44px',
+          height: '44px',
+          background: 'linear-gradient(135deg, #cf7152, #b85a3e)',
+          boxShadow: '0 4px 16px rgba(60,45,30,0.25)',
+          fontSize: '22px',
+          fontWeight: 300,
+          color: 'white',
+          lineHeight: 1,
+        }}
+      >
+        +
+      </button>
 
       <PostModal
         editMoment={editMoment}

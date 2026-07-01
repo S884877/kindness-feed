@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { getSession, type Session } from '@/lib/session'
+import { trackShareClick } from '@/lib/metrics'
 import { uploadChainImage, ACCEPTED_IMAGE_TYPES } from '@/lib/chainUpload'
 import { chainShareUrl, type ChainAct } from '@/lib/chain'
 
@@ -174,6 +175,7 @@ export default function ChainForm({ parentToken }: { parentToken?: string }) {
           <a
             href={`https://wa.me/?text=${encodeURIComponent(message)}`}
             target="_blank" rel="noopener noreferrer"
+            onClick={() => session && trackShareClick(session.id, result.id, 'whatsapp')}
             className="press text-white font-semibold px-5 py-3 rounded-full text-[14px]"
             style={{ background: '#25D366' }}
           >
@@ -181,6 +183,7 @@ export default function ChainForm({ parentToken }: { parentToken?: string }) {
           </a>
           <a
             href={`mailto:?subject=${encodeURIComponent('keep this kindness chain going')}&body=${encodeURIComponent(message)}`}
+            onClick={() => session && trackShareClick(session.id, result.id, 'email')}
             className="press text-white font-semibold px-5 py-3 rounded-full text-[14px]"
             style={{ background: 'linear-gradient(135deg, #cf7152, #b85a3e)' }}
           >
@@ -188,6 +191,7 @@ export default function ChainForm({ parentToken }: { parentToken?: string }) {
           </a>
           <a
             href={`sms:?body=${encodeURIComponent(message)}`}
+            onClick={() => session && trackShareClick(session.id, result.id, 'sms')}
             className="press text-white font-semibold px-5 py-3 rounded-full text-[14px]"
             style={{ background: '#6b5a4e' }}
           >
