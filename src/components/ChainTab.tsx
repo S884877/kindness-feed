@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getSession, type Session } from '@/lib/session'
 import type { ChainAct } from '@/lib/chain'
+import ChainForm from './ChainForm'
 
 type ChainState = 'A' | 'B' | 'C'
 
@@ -33,6 +34,8 @@ export default function ChainTab({ initialRef }: { initialRef?: string }) {
   const [expandAbove, setExpandAbove] = useState(false)
   const [expandBelow, setExpandBelow] = useState(false)
   const [showAuthSheet, setShowAuthSheet] = useState(false)
+  const [showForm, setShowForm] = useState(false)
+  const [parentActToken, setParentActToken] = useState<string | undefined>(undefined)
   const [inviteCopied, setInviteCopied] = useState(false)
   const router = useRouter()
 
@@ -53,21 +56,23 @@ export default function ChainTab({ initialRef }: { initialRef?: string }) {
       // (arrived via a card's share link) or a user_id (arrived via /join).
       const { data: byToken } = await supabase
         .from('chain_acts')
-        .select('chain_id')
+        .select('chain_id, share_token')
         .eq('share_token', storedRef)
         .maybeSingle()
 
       let inviterChainId = byToken?.chain_id ?? null
+      let inviterShareToken = byToken?.share_token ?? null
 
       if (!inviterChainId) {
         const { data: byUser } = await supabase
           .from('chain_acts')
-          .select('chain_id')
+          .select('chain_id, share_token')
           .eq('user_id', storedRef)
           .order('created_at', { ascending: false })
           .limit(1)
           .maybeSingle()
         inviterChainId = byUser?.chain_id ?? null
+        inviterShareToken = byUser?.share_token ?? null
       }
 
       if (inviterChainId) {
@@ -77,6 +82,7 @@ export default function ChainTab({ initialRef }: { initialRef?: string }) {
           .eq('chain_id', inviterChainId)
           .order('depth', { ascending: true })
         setActs((chain ?? []) as ChainAct[])
+        setParentActToken(inviterShareToken ?? undefined)
         setChainState('B')
         return
       }
@@ -116,8 +122,12 @@ export default function ChainTab({ initialRef }: { initialRef?: string }) {
 
   function handleAddOrJoin() {
     if (!session) { setShowAuthSheet(true); return }
-    localStorage.setItem('pending_tab', 'chain')
-    router.push('/')
+    setShowForm(true)
+  }
+
+  function closeForm() {
+    setShowForm(false)
+    load(session)
   }
 
   async function handleInvite() {
@@ -320,6 +330,35 @@ export default function ChainTab({ initialRef }: { initialRef?: string }) {
                 create account
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* add / join chain form sheet */}
+      {showForm && (
+        <div
+          className="fixed inset-0 z-50 flex items-end"
+          style={{
+            background: 'rgba(44,38,32,0.3)',
+            backdropFilter: 'blur(4px)',
+            WebkitBackdropFilter: 'blur(4px)',
+          }}
+          onClick={closeForm}
+        >
+          <div
+            className="relative w-full bg-[#fffdf9] rounded-t-3xl px-6 pt-6 pb-10 max-h-[85vh] overflow-y-auto"
+            style={{ boxShadow: '0 -8px 32px rgba(60,45,30,0.12)' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <button
+              onClick={closeForm}
+              aria-label="close"
+              className="absolute top-5 right-6 text-[var(--ink-faint)] text-xl leading-none"
+            >
+              ×
+            </button>
+            <div className="mx-auto mb-6 rounded-full" style={{ width: 40, height: 4, background: '#e8d8c8' }} />
+            <ChainForm parentToken={chainState === 'B' ? parentActToken : undefined} />
           </div>
         </div>
       )}
