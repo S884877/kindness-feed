@@ -70,7 +70,7 @@ export default function ChainForm({ parentToken }: { parentToken?: string }) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!actText.trim() || !feelingText.trim() || !session) return
+    if (!actText.trim() || !session) return
 
     setLoading(true)
     setError('')
@@ -225,29 +225,6 @@ export default function ChainForm({ parentToken }: { parentToken?: string }) {
       </div>
 
       <div>
-        <label className={labelCls}>how did it feel?</label>
-        <textarea
-          value={feelingText}
-          onChange={(e) => setFeelingText(e.target.value)}
-          rows={3}
-          required
-          placeholder="small, but good. like it mattered..."
-          className={`${fieldCls} resize-none font-serif italic`}
-        />
-      </div>
-
-      <div>
-        <label className={labelCls}>where did this happen?</label>
-        <input
-          type="text"
-          value={locationText}
-          onChange={(e) => setLocationText(e.target.value)}
-          placeholder="your city or town"
-          className={fieldCls}
-        />
-      </div>
-
-      <div>
         <label className={labelCls}>photo (optional)</label>
         <input
           ref={fileInput}
@@ -282,7 +259,7 @@ export default function ChainForm({ parentToken }: { parentToken?: string }) {
 
       <button
         type="submit"
-        disabled={loading || !actText.trim() || !feelingText.trim()}
+        disabled={loading || !actText.trim()}
         className="press text-white font-semibold py-3.5 rounded-2xl transition-all text-[15px] disabled:opacity-40 mt-2"
         style={{ background: 'linear-gradient(135deg, #cf7152, #b85a3e)' }}
       >
