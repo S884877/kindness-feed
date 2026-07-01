@@ -26,19 +26,24 @@ function LoginForm() {
     e.preventDefault()
     setLoading(true)
     setError('')
-    const res = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    })
-    const data = await res.json()
-    if (!res.ok) {
-      setError(data.error || 'incorrect email or password')
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.error || 'incorrect email or password')
+        setLoading(false)
+        return
+      }
+      saveSession({ id: data.id, email: data.email })
+      router.push(next || '/')
+    } catch {
+      setError('something went wrong. try again.')
       setLoading(false)
-      return
     }
-    saveSession({ id: data.id, email: data.email })
-    router.push(next || '/')
   }
 
   const fieldCls =

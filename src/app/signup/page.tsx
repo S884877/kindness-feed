@@ -37,24 +37,29 @@ function SignupForm() {
     e.preventDefault()
     setLoading(true)
     setError('')
-    const res = await fetch('/api/auth/signup', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email,
-        password,
-        phone_country_code: countryCode,
-        phone_number: phoneNumber,
-      }),
-    })
-    const data = await res.json()
-    if (!res.ok) {
-      setError(data.error || 'something went wrong. try again.')
+    try {
+      const res = await fetch('/api/auth/signup', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email,
+          password,
+          phone_country_code: countryCode,
+          phone_number: phoneNumber,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.error || 'something went wrong. try again.')
+        setLoading(false)
+        return
+      }
+      saveSession({ id: data.id, email: data.email })
+      router.push(next || '/')
+    } catch {
+      setError('something went wrong. try again.')
       setLoading(false)
-      return
     }
-    saveSession({ id: data.id, email: data.email })
-    router.push(next || '/')
   }
 
   const fieldCls =
