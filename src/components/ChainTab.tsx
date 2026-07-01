@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { getSession, type Session } from '@/lib/session'
 import type { ChainAct } from '@/lib/chain'
 
-type ChainState = 'A' | 'B' | 'C' | 'loading'
+type ChainState = 'A' | 'B' | 'C'
 
 const WINDOW = 5
 
@@ -23,9 +23,12 @@ function relativeTime(dateStr: string): string {
   return `${Math.floor(days / 7)}w ago`
 }
 
-export default function ChainTab() {
+export default function ChainTab({ initialRef }: { initialRef?: string }) {
   const [session, setSession] = useState<Session | null>(null)
-  const [chainState, setChainState] = useState<ChainState>('loading')
+  // paint the chain immediately as the global chain — swapped out once we
+  // know whether the visitor is arriving via an invite link or has their own
+  // chain, so the visualization never waits on an auth check.
+  const [chainState, setChainState] = useState<ChainState>('A')
   const [acts, setActs] = useState<ChainAct[]>([])
   const [expandAbove, setExpandAbove] = useState(false)
   const [expandBelow, setExpandBelow] = useState(false)
@@ -41,28 +44,42 @@ export default function ChainTab() {
 
   async function load(s: Session | null) {
     const supabase = createClient()
-    const storedRef = localStorage.getItem('chain_ref')
+
+    if (initialRef) localStorage.setItem('chain_ref', initialRef)
+    const storedRef = initialRef || localStorage.getItem('chain_ref')
 
     if (storedRef) {
-      // State B — show the inviter's chain
-      const { data: inviterAct } = await supabase
+      // State B — show the inviter's chain. storedRef may be a share_token
+      // (arrived via a card's share link) or a user_id (arrived via /join).
+      const { data: byToken } = await supabase
         .from('chain_acts')
         .select('chain_id')
-        .eq('user_id', storedRef)
-        .order('created_at', { ascending: false })
-        .limit(1)
+        .eq('share_token', storedRef)
         .maybeSingle()
 
-      if (inviterAct?.chain_id) {
+      let inviterChainId = byToken?.chain_id ?? null
+
+      if (!inviterChainId) {
+        const { data: byUser } = await supabase
+          .from('chain_acts')
+          .select('chain_id')
+          .eq('user_id', storedRef)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+        inviterChainId = byUser?.chain_id ?? null
+      }
+
+      if (inviterChainId) {
         const { data: chain } = await supabase
           .from('chain_acts')
           .select('*')
-          .eq('chain_id', inviterAct.chain_id)
+          .eq('chain_id', inviterChainId)
           .order('depth', { ascending: true })
         setActs((chain ?? []) as ChainAct[])
+        setChainState('B')
+        return
       }
-      setChainState('B')
-      return
     }
 
     if (s) {
@@ -117,8 +134,6 @@ export default function ChainTab() {
     } catch {}
   }
 
-  if (chainState === 'loading') return null
-
   const userIdx = chainState === 'C' && session
     ? acts.findIndex(a => a.user_id === session.id)
     : -1
@@ -135,19 +150,15 @@ export default function ChainTab() {
     displayActs = acts.slice(start, end)
   }
 
-  const headerLabel =
-    chainState === 'A' ? 'the global chain' :
-    chainState === 'B' ? 'this chain' : 'your chain'
-
   const buttonLabel =
-    chainState === 'A' ? 'Add chain' :
-    chainState === 'B' ? 'Join Chain' :
-    inviteCopied ? 'link copied!' : 'Invite others to this chain'
+    chainState === 'A' ? 'add to the chain' :
+    chainState === 'B' ? 'join this chain' :
+    inviteCopied ? 'link copied!' : 'invite others to this chain'
 
   return (
     <div className="pb-36">
       <p className="text-[11px] font-semibold text-[var(--ink-faint)] uppercase tracking-[0.08em] mb-6">
-        {headerLabel}
+        your chain
       </p>
 
       {hasHiddenAbove && (
@@ -161,17 +172,17 @@ export default function ChainTab() {
       )}
 
       <div>
-        {displayActs.map((a, i) => {
+        {displayActs.map((a) => {
           const isUser = chainState === 'C' && !!session && a.user_id === session.id
-          const isLast = i === displayActs.length - 1
+          const dotSize = isUser ? 16 : 12
 
           return (
             <div key={a.id} className="flex gap-3">
               {/* line + dot */}
-              <div className="flex flex-col items-center" style={{ width: 14, flexShrink: 0 }}>
+              <div className="flex flex-col items-center" style={{ width: 16, flexShrink: 0 }}>
                 <div
                   className="relative"
-                  style={{ width: 12, height: 12, marginTop: 15, flexShrink: 0 }}
+                  style={{ width: dotSize, height: dotSize, marginTop: 15, flexShrink: 0 }}
                 >
                   {isUser && (
                     <div
@@ -182,26 +193,27 @@ export default function ChainTab() {
                   <div
                     className="absolute inset-0 rounded-full"
                     style={{
-                      background: isUser ? 'var(--accent)' : 'rgba(194,103,76,0.35)',
-                      boxShadow: isUser ? '0 0 0 2px rgba(194,103,76,0.2)' : 'none',
+                      background: isUser ? 'var(--accent)' : 'rgba(194,103,76,0.4)',
+                      boxShadow: isUser ? '0 0 0 3px rgba(194,103,76,0.2)' : 'none',
                     }}
                   />
                 </div>
-                {!isLast && (
-                  <div style={{
-                    width: 2, flexGrow: 1, minHeight: 16, marginTop: 3,
-                    background: 'rgba(194,103,76,0.22)', borderRadius: 1,
-                  }} />
-                )}
+                <div style={{
+                  width: 2, flexGrow: 1, minHeight: 20, marginTop: 3,
+                  background: 'rgba(194,103,76,0.22)', borderRadius: 1,
+                }} />
               </div>
 
               {/* card */}
-              <div className="flex-1 mb-3">
+              <div className="flex-1" style={{ marginBottom: 20 }}>
                 <div
-                  className="rounded-2xl px-4 py-4 relative"
+                  className="relative"
                   style={{
-                    background: isUser ? '#fdf0e6' : '#faf6f1',
-                    border: `1px solid ${isUser ? '#f0d5be' : '#ede3d8'}`,
+                    background: isUser ? '#fdf0e6' : '#fffdf9',
+                    borderRadius: 22,
+                    boxShadow:
+                      '0 1px 2px rgba(60,45,30,0.04), 0 8px 24px rgba(60,45,30,0.06), 0 24px 48px -24px rgba(60,45,30,0.10)',
+                    padding: '16px 20px',
                   }}
                 >
                   {isUser && (
@@ -213,12 +225,12 @@ export default function ChainTab() {
                     </span>
                   )}
                   <p
-                    className="font-serif text-[14px] leading-[1.6] text-[var(--ink)] mb-2 line-clamp-3"
+                    className="font-serif text-[15px] leading-[1.6] text-[var(--ink)] mb-2"
                     style={isUser ? { paddingRight: '72px' } : {}}
                   >
                     {a.act_text}
                   </p>
-                  <p className="text-[11px]" style={{ color: 'var(--ink-faint)' }}>
+                  <p className="text-[12px]" style={{ color: 'var(--ink-faint)' }}>
                     {relativeTime(a.created_at)}
                     {a.location_text && <span> · {a.location_text}</span>}
                   </p>
@@ -228,35 +240,19 @@ export default function ChainTab() {
           )
         })}
 
-        {/* empty placeholder for State A / B */}
-        {(chainState === 'A' || chainState === 'B') && (
-          <div className="flex gap-3">
-            <div className="flex flex-col items-center" style={{ width: 14, flexShrink: 0 }}>
-              <div style={{
-                width: 10, height: 10, marginTop: 15, flexShrink: 0,
-                borderRadius: '50%', border: '2px dashed rgba(194,103,76,0.4)',
-              }} />
-            </div>
-            <div className="flex-1 mb-3">
-              <div
-                className="rounded-2xl px-4 py-4"
-                style={{ border: '1.5px dashed rgba(194,103,76,0.3)', background: 'transparent' }}
-              >
-                <p className="font-serif text-[14px]" style={{ color: 'rgba(168,156,143,0.8)' }}>
-                  {chainState === 'B' ? 'you can add here — join this chain' : 'you can add here'}
-                </p>
-              </div>
-            </div>
+        {/* terminal open dot — the next open slot in the chain */}
+        <div className="flex gap-3 items-start">
+          <div className="flex flex-col items-center" style={{ width: 16, flexShrink: 0 }}>
+            <div
+              className="rounded-full"
+              style={{
+                width: 10, height: 10, marginTop: 15,
+                border: '2px solid rgba(194,103,76,0.35)',
+                flexShrink: 0,
+              }}
+            />
           </div>
-        )}
-
-        {/* terminal open dot */}
-        <div className="flex gap-3 items-center pl-[2px]">
-          <div className="rounded-full" style={{
-            width: 10, height: 10,
-            border: '2px solid rgba(194,103,76,0.3)',
-            flexShrink: 0,
-          }} />
+          <div className="flex-1" />
         </div>
       </div>
 

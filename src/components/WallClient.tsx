@@ -13,7 +13,13 @@ import { Moment } from '@/lib/types'
 
 type View = 'wall' | 'chain' | 'profile'
 
-export default function WallClient({ initialMoments }: { initialMoments: Moment[] }) {
+export default function WallClient({
+  initialMoments,
+  initialRef,
+}: {
+  initialMoments: Moment[]
+  initialRef?: string
+}) {
   const [view, setView] = useState<View>('chain')
   const [session, setSession] = useState<Session | null>(null)
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
@@ -36,6 +42,10 @@ export default function WallClient({ initialMoments }: { initialMoments: Moment[
       setView('chain')
     } else if (s && params.get('view') === 'mine') {
       setView('profile')
+    }
+
+    if (initialRef) {
+      window.history.replaceState({}, '', window.location.pathname)
     }
 
     if (!s && !sessionStorage.getItem('nudge_shown')) {
@@ -98,7 +108,7 @@ export default function WallClient({ initialMoments }: { initialMoments: Moment[
         />
       )}
 
-      {view === 'chain' && <ChainTab />}
+      {view === 'chain' && <ChainTab initialRef={initialRef} />}
 
       {view === 'profile' && session && (
         <ProfileTab
