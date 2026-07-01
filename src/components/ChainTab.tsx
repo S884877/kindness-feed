@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { getSession, type Session } from '@/lib/session'
 import type { ChainAct } from '@/lib/chain'
 import ChainForm from './ChainForm'
+import ChainCounter from './ChainCounter'
 
 type ChainState = 'A' | 'B' | 'C'
 
@@ -167,6 +168,18 @@ export default function ChainTab({ initialRef }: { initialRef?: string }) {
 
   return (
     <div className="pb-36">
+      <div className="mb-8 text-center">
+        <p className="font-serif text-[18px] leading-[1.6] text-[var(--ink)] mb-2">
+          pay it forward, one act at a time.
+        </p>
+        <p className="text-[13px] leading-[1.7] text-[var(--ink-faint)] max-w-sm mx-auto mb-6">
+          post an act of kindness, get a link, share it. whoever posts through your link becomes
+          the next person in your chain — and their link starts a new branch. we&apos;re trying
+          to reach 1,000,000 acts.
+        </p>
+        <ChainCounter />
+      </div>
+
       <p className="text-[11px] font-semibold text-[var(--ink-faint)] uppercase tracking-[0.08em] mb-6">
         your chain
       </p>
