@@ -142,7 +142,7 @@ export default function ChainTab({ initialRef }: { initialRef?: string }) {
     const shareUrl = myAct
       ? `${window.location.origin}/?ref=${myAct.share_token}`
       : `${window.location.origin}/join?ref=${session.id}`
-    const msg = `Someone shared an act of kindness and started a chain.\nNow it's your turn. Share something kind that you did and join the chain.\nTogether, we're building 1,000,000 acts this week. Let's go. ${shareUrl}`
+    const msg = `Hey there! I'm taking part in this cool challenge to hit 1 million acts of kindness this week. I just posted something kind that I did and now I'm passing the link to you... Share something you did and keep the chain going! ${shareUrl}`
     try {
       await navigator.clipboard.writeText(msg)
       setInviteCopied(true)
