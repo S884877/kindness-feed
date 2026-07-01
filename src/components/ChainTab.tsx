@@ -310,20 +310,14 @@ export default function ChainTab() {
             </p>
             <div className="flex flex-col gap-3">
               <button
-                onClick={() => {
-                  localStorage.setItem('pending_tab', 'chain')
-                  router.push('/login?next=/wall')
-                }}
+                onClick={() => router.push('/login?next=' + encodeURIComponent('/wall?tab=chain'))}
                 className="press text-white font-semibold py-3.5 rounded-full text-[15px]"
                 style={{ background: 'linear-gradient(135deg, #cf7152, #b85a3e)' }}
               >
                 sign in
               </button>
               <button
-                onClick={() => {
-                  localStorage.setItem('pending_tab', 'chain')
-                  router.push('/signup?next=/wall')
-                }}
+                onClick={() => router.push('/signup?next=' + encodeURIComponent('/wall?tab=chain'))}
                 className="press font-semibold py-3.5 rounded-full text-[15px] border"
                 style={{ color: 'var(--accent)', borderColor: 'rgba(194,103,76,0.3)' }}
               >

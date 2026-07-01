@@ -26,12 +26,15 @@ export default function WallClient({ initialMoments }: { initialMoments: Moment[
     const s = getSession()
     setSession(s)
 
-    // restore tab from post-auth redirect or ?view=mine URL param
-    const pendingTab = localStorage.getItem('pending_tab')
-    if (pendingTab === 'chain') {
+    // restore tab from post-auth redirect or URL params
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('tab') === 'chain') {
+      setView('chain')
+      window.history.replaceState({}, '', '/wall')
+    } else if (localStorage.getItem('pending_tab') === 'chain') {
       localStorage.removeItem('pending_tab')
       setView('chain')
-    } else if (s && new URLSearchParams(window.location.search).get('view') === 'mine') {
+    } else if (s && params.get('view') === 'mine') {
       setView('profile')
     }
 
