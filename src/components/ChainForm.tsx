@@ -38,6 +38,7 @@ export default function ChainForm({ parentToken }: { parentToken?: string }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [result, setResult] = useState<ChainAct | null>(null)
+  const [globalCount, setGlobalCount] = useState<number | null>(null)
   const [copied, setCopied] = useState(false)
   const fileInput = useRef<HTMLInputElement>(null)
   const router = useRouter()
@@ -93,6 +94,7 @@ export default function ChainForm({ parentToken }: { parentToken?: string }) {
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'something went wrong')
       setResult(data.entry as ChainAct)
+      setGlobalCount(typeof data.global_count === 'number' ? data.global_count : null)
     } catch (err: any) {
       setError(err.message || 'something went wrong. try again.')
     }
@@ -158,10 +160,17 @@ export default function ChainForm({ parentToken }: { parentToken?: string }) {
     return (
       <div className="flex flex-col items-center text-center px-2 py-4">
         <p className="font-serif text-[24px] leading-[1.5] text-[var(--ink)] mb-2">
-          you're person {result.depth} in this chain. 🤍
+          {globalCount
+            ? `you're #${globalCount.toLocaleString()} in the kindness chain.`
+            : `you're person ${result.depth} in this chain.`} 🤍
         </p>
-        <p className="font-serif text-[17px] leading-[1.6] text-[var(--ink-soft)] mb-8">
-          share your link to keep it going — every person who posts through it becomes the next link.
+        <p className="font-serif text-[17px] leading-[1.6] text-[var(--ink-soft)] mb-3">
+          {result.depth === 1
+            ? "and you just started a brand new chain — share your link to keep it going."
+            : 'share your link to keep it going — every person who posts through it becomes the next link.'}
+        </p>
+        <p className="text-[13px] leading-[1.6] text-[var(--ink-faint)] mb-8 max-w-xs">
+          share it with 2 people. they each share it with 2 more. just 20 rounds of that and we're past 1,000,000.
         </p>
 
         <div className="w-full bg-[#f7f0e8] rounded-2xl px-5 py-4 mb-6 flex items-center justify-between gap-3">
@@ -201,10 +210,6 @@ export default function ChainForm({ parentToken }: { parentToken?: string }) {
 
         <p className="text-[13px] text-[var(--ink-faint)] mb-2">
           want to post it on instagram? paste the link in your bio or DM it — there's no clean web share button for that one.
-        </p>
-
-        <p className="font-serif text-[16px] text-[var(--ink-soft)] mt-6">
-          we're trying to reach 1,000,000 acts of kindness this week. you just added one.
         </p>
       </div>
     )

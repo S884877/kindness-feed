@@ -95,7 +95,11 @@ export async function POST(req: Request) {
     // fire-and-forget notifications — don't block the response on email delivery
     notifyAncestors(supabase, parent, inserted).catch((e) => console.error('chain notify error:', e))
 
-    return NextResponse.json({ ok: true, entry: inserted })
+    const { count: global_count } = await supabase
+      .from('chain_acts')
+      .select('id', { count: 'exact', head: true })
+
+    return NextResponse.json({ ok: true, entry: inserted, global_count: global_count ?? null })
   } catch (e) {
     console.error('chain submit error:', e)
     return NextResponse.json({ error: 'something went wrong' }, { status: 500 })
