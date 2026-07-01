@@ -1,9 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import ChainCounter from './ChainCounter'
 import ChainForm from './ChainForm'
+import ChainDashboard from './ChainDashboard'
+import { getSession, type Session } from '@/lib/session'
 import type { ChainAct } from '@/lib/chain'
 
 export default function ChainHome({
@@ -14,6 +16,27 @@ export default function ChainHome({
   parentPost?: ChainAct | null
 }) {
   const [showForm, setShowForm] = useState(!!parentToken)
+  const [session, setSession] = useState<Session | null | undefined>(undefined)
+
+  useEffect(() => {
+    setSession(getSession())
+  }, [])
+
+  // still checking localStorage on mount — avoid a flash of the wrong state
+  if (session === undefined) return null
+
+  // signed-in visitors with no invite link land on their own chain, not the
+  // generic pitch — the tree + share options is what they came back to see.
+  if (session && !parentToken) {
+    return (
+      <div className="feed-frame px-5">
+        <ChainCounter />
+        <div className="mt-6">
+          <ChainDashboard session={session} />
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="feed-frame px-5">
