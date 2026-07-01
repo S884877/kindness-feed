@@ -6,7 +6,7 @@ export type ChainAct = {
   share_token: string
   user_id: string
   act_text: string
-  feeling_text: string
+  feeling_text: string | null
   location_text: string | null
   image_url: string | null
   phone_country_code: string | null

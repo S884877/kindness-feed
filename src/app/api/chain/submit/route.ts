@@ -33,7 +33,7 @@ export async function POST(req: Request) {
       parent_share_token,
     } = body
 
-    if (!user_id || !act_text?.trim() || !feeling_text?.trim()) {
+    if (!user_id || !act_text?.trim()) {
       return NextResponse.json({ error: 'missing required fields' }, { status: 400 })
     }
 
@@ -78,7 +78,7 @@ export async function POST(req: Request) {
         share_token,
         user_id,
         act_text: act_text.trim(),
-        feeling_text: feeling_text.trim(),
+        feeling_text: feeling_text?.trim() || null,
         location_text: location_text?.trim() || null,
         image_url: image_url || null,
         phone_country_code: account?.phone_country_code ?? null,
