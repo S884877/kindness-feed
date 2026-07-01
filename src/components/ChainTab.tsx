@@ -4,20 +4,10 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { getSession, type Session } from '@/lib/session'
-
-type ChainMoment = {
-  id: string
-  kindness: string
-  created_at: string
-  location: string | null
-  chain_id: string | null
-  parent_moment_id: string | null
-  user_id: string | null
-}
+import type { ChainAct } from '@/lib/chain'
 
 type ChainState = 'A' | 'B' | 'C' | 'loading'
 
-const FIELDS = 'id, kindness, created_at, location, chain_id, parent_moment_id, user_id'
 const WINDOW = 5
 
 function relativeTime(dateStr: string): string {
@@ -36,7 +26,7 @@ function relativeTime(dateStr: string): string {
 export default function ChainTab() {
   const [session, setSession] = useState<Session | null>(null)
   const [chainState, setChainState] = useState<ChainState>('loading')
-  const [moments, setMoments] = useState<ChainMoment[]>([])
+  const [acts, setActs] = useState<ChainAct[]>([])
   const [expandAbove, setExpandAbove] = useState(false)
   const [expandBelow, setExpandBelow] = useState(false)
   const [showAuthSheet, setShowAuthSheet] = useState(false)
@@ -54,69 +44,72 @@ export default function ChainTab() {
     const storedRef = localStorage.getItem('chain_ref')
 
     if (storedRef) {
-      const { data: root } = await supabase
-        .from('moments')
-        .select(FIELDS)
+      // State B — show the inviter's chain
+      const { data: inviterAct } = await supabase
+        .from('chain_acts')
+        .select('chain_id')
         .eq('user_id', storedRef)
-        .not('chain_id', 'is', null)
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle()
 
-      if (root?.chain_id) {
+      if (inviterAct?.chain_id) {
         const { data: chain } = await supabase
-          .from('moments')
-          .select(FIELDS)
-          .eq('chain_id', (root as ChainMoment).chain_id as string)
-          .order('created_at', { ascending: true })
-        setMoments((chain ?? []) as ChainMoment[])
+          .from('chain_acts')
+          .select('*')
+          .eq('chain_id', inviterAct.chain_id)
+          .order('depth', { ascending: true })
+        setActs((chain ?? []) as ChainAct[])
       }
       setChainState('B')
       return
     }
 
     if (s) {
-      const { data: mine } = await supabase
-        .from('moments')
-        .select(FIELDS)
+      // State C — user's own chain
+      const { data: myAct } = await supabase
+        .from('chain_acts')
+        .select('chain_id')
         .eq('user_id', s.id)
-        .not('chain_id', 'is', null)
         .order('created_at', { ascending: false })
         .limit(1)
         .maybeSingle()
 
-      if (mine && (mine as ChainMoment).chain_id) {
+      if (myAct?.chain_id) {
         const { data: chain } = await supabase
-          .from('moments')
-          .select(FIELDS)
-          .eq('chain_id', (mine as ChainMoment).chain_id as string)
-          .order('created_at', { ascending: true })
-        setMoments((chain ?? []) as ChainMoment[])
+          .from('chain_acts')
+          .select('*')
+          .eq('chain_id', myAct.chain_id)
+          .order('depth', { ascending: true })
+        setActs((chain ?? []) as ChainAct[])
         setChainState('C')
         return
       }
     }
 
-    // State A: global chain, show most recent 30 oldest-first
+    // State A — global chain (most recent 30, oldest first)
     const { data: global } = await supabase
-      .from('moments')
-      .select(FIELDS)
+      .from('chain_acts')
+      .select('*')
       .order('created_at', { ascending: false })
       .limit(30)
-    setMoments(((global ?? []) as ChainMoment[]).reverse())
+    setActs(((global ?? []) as ChainAct[]).reverse())
     setChainState('A')
   }
 
   function handleAddOrJoin() {
     if (!session) { setShowAuthSheet(true); return }
     localStorage.setItem('pending_tab', 'chain')
-    router.push('/share')
+    router.push('/')
   }
 
   async function handleInvite() {
     if (!session) return
-    const inviteUrl = `${window.location.origin}/join?ref=${session.id}`
-    const msg = `Someone shared an act of kindness and started a chain.\nNow it's your turn. Share something kind that you did and join the chain.\nTogether, we're building 1,000,000 acts this week. Let's go. ${inviteUrl}`
+    const myAct = acts.find(a => a.user_id === session.id)
+    const shareUrl = myAct
+      ? `${window.location.origin}/?ref=${myAct.share_token}`
+      : `${window.location.origin}/join?ref=${session.id}`
+    const msg = `Someone shared an act of kindness and started a chain.\nNow it's your turn. Share something kind that you did and join the chain.\nTogether, we're building 1,000,000 acts this week. Let's go. ${shareUrl}`
     try {
       await navigator.clipboard.writeText(msg)
       setInviteCopied(true)
@@ -127,19 +120,19 @@ export default function ChainTab() {
   if (chainState === 'loading') return null
 
   const userIdx = chainState === 'C' && session
-    ? moments.findIndex(m => m.user_id === session.id)
+    ? acts.findIndex(a => a.user_id === session.id)
     : -1
 
-  let displayMoments = moments
+  let displayActs = acts
   let hasHiddenAbove = false
   let hasHiddenBelow = false
 
   if (chainState === 'C' && userIdx >= 0) {
     const start = expandAbove ? 0 : Math.max(0, userIdx - WINDOW)
-    const end = expandBelow ? moments.length : Math.min(moments.length, userIdx + WINDOW + 1)
+    const end = expandBelow ? acts.length : Math.min(acts.length, userIdx + WINDOW + 1)
     hasHiddenAbove = start > 0
-    hasHiddenBelow = end < moments.length
-    displayMoments = moments.slice(start, end)
+    hasHiddenBelow = end < acts.length
+    displayActs = acts.slice(start, end)
   }
 
   const headerLabel =
@@ -168,12 +161,12 @@ export default function ChainTab() {
       )}
 
       <div>
-        {displayMoments.map((m, i) => {
-          const isUser = chainState === 'C' && !!session && m.user_id === session.id
-          const isLast = i === displayMoments.length - 1
+        {displayActs.map((a, i) => {
+          const isUser = chainState === 'C' && !!session && a.user_id === session.id
+          const isLast = i === displayActs.length - 1
 
           return (
-            <div key={m.id} className="flex gap-3">
+            <div key={a.id} className="flex gap-3">
               {/* line + dot */}
               <div className="flex flex-col items-center" style={{ width: 14, flexShrink: 0 }}>
                 <div
@@ -223,11 +216,11 @@ export default function ChainTab() {
                     className="font-serif text-[14px] leading-[1.6] text-[var(--ink)] mb-2 line-clamp-3"
                     style={isUser ? { paddingRight: '72px' } : {}}
                   >
-                    {m.kindness}
+                    {a.act_text}
                   </p>
                   <p className="text-[11px]" style={{ color: 'var(--ink-faint)' }}>
-                    {relativeTime(m.created_at)}
-                    {m.location && <span> · {m.location}</span>}
+                    {relativeTime(a.created_at)}
+                    {a.location_text && <span> · {a.location_text}</span>}
                   </p>
                 </div>
               </div>
@@ -235,7 +228,7 @@ export default function ChainTab() {
           )
         })}
 
-        {/* Empty placeholder for State A / B */}
+        {/* empty placeholder for State A / B */}
         {(chainState === 'A' || chainState === 'B') && (
           <div className="flex gap-3">
             <div className="flex flex-col items-center" style={{ width: 14, flexShrink: 0 }}>
@@ -277,11 +270,8 @@ export default function ChainTab() {
         </button>
       )}
 
-      {/* fixed bottom action button — sits above the BottomNav */}
-      <div
-        className="fixed left-0 right-0 px-5 z-10"
-        style={{ bottom: '76px' }}
-      >
+      {/* fixed bottom action button */}
+      <div className="fixed left-0 right-0 px-5 z-10" style={{ bottom: '76px' }}>
         <button
           onClick={chainState === 'C' ? handleInvite : handleAddOrJoin}
           className="press text-white font-semibold py-4 rounded-full text-[15px] w-full active:scale-95 transition-transform"
@@ -313,10 +303,7 @@ export default function ChainTab() {
             style={{ boxShadow: '0 -8px 32px rgba(60,45,30,0.12)' }}
             onClick={e => e.stopPropagation()}
           >
-            <div
-              className="mx-auto mb-6 rounded-full"
-              style={{ width: 40, height: 4, background: '#e8d8c8' }}
-            />
+            <div className="mx-auto mb-6 rounded-full" style={{ width: 40, height: 4, background: '#e8d8c8' }} />
             <p className="font-serif text-[22px] text-[var(--ink)] mb-3">join the chain</p>
             <p className="text-[14px] leading-[1.65] text-[var(--ink-faint)] mb-8 max-w-xs mx-auto">
               sign in or create an account to add your kind act and keep this going.
