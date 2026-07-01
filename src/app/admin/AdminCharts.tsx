@@ -57,7 +57,10 @@ export function SharePlatformChart({ data }: { data: { platform: string; count: 
             cx="50%"
             cy="50%"
             outerRadius={80}
-            label={({ platform, percent }) => `${platform} ${(percent * 100).toFixed(0)}%`}
+            label={(props) => {
+              const entry = data[props.index as number]
+              return `${entry?.platform ?? ''} ${((props.percent ?? 0) * 100).toFixed(0)}%`
+            }}
             labelLine={false}
           >
             {data.map((entry, i) => (
@@ -116,7 +119,10 @@ export function DevicePieChart({ data }: { data: { device_type: string; count: n
           cx="50%"
           cy="50%"
           outerRadius={75}
-          label={({ device_type, percent }) => `${device_type} ${(percent * 100).toFixed(0)}%`}
+          label={(props) => {
+              const entry = data[props.index as number]
+              return `${entry?.device_type ?? ''} ${((props.percent ?? 0) * 100).toFixed(0)}%`
+            }}
           labelLine={false}
         >
           {data.map((entry, i) => (
