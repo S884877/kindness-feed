@@ -8,6 +8,7 @@ import {
   FunnelChart,
 } from './AdminCharts'
 import AdminUserSearch from './AdminUserSearch'
+import AdminAutoRefresh from './AdminAutoRefresh'
 
 export const dynamic = 'force-dynamic'
 
@@ -88,6 +89,10 @@ export default async function AdminDashboard() {
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
   const thirtyDaysAgoStr = thirtyDaysAgo.toISOString()
 
+  const weekAgo = new Date(today)
+  weekAgo.setDate(weekAgo.getDate() - 7)
+  const weekAgoStr = weekAgo.toISOString()
+
   const [
     { count: totalMoments },
     { count: totalChains },
@@ -97,6 +102,7 @@ export default async function AdminDashboard() {
     { count: totalSaves },
     { count: momentsToday },
     { count: momentsYesterday },
+    { count: momentsThisWeek },
     { data: linkOpensRaw },
     { data: shareClicksRaw },
     { data: chainSigninsRaw },
@@ -114,6 +120,7 @@ export default async function AdminDashboard() {
     supabase.from('saved_moments').select('*', { count: 'exact', head: true }),
     supabase.from('moments').select('*', { count: 'exact', head: true }).gte('created_at', todayStr),
     supabase.from('moments').select('*', { count: 'exact', head: true }).gte('created_at', yesterdayStr).lt('created_at', todayStr),
+    supabase.from('moments').select('*', { count: 'exact', head: true }).gte('created_at', weekAgoStr),
     supabase.from('chain_link_opens').select('chain_id, visitor_fingerprint'),
     supabase.from('share_clicks').select('platform, clicked_at'),
     supabase.from('chain_signins').select('id'),
@@ -256,9 +263,12 @@ export default async function AdminDashboard() {
           <h1 style={{ fontSize: 22, fontWeight: 700, color: '#1a1a1a', margin: 0 }}>
             the kindness wall — admin
           </h1>
-          <p style={{ fontSize: 13, color: '#aaa', marginTop: 4 }}>
-            {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
-          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 4 }}>
+            <p style={{ fontSize: 13, color: '#aaa', margin: 0 }}>
+              {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
+            </p>
+            <AdminAutoRefresh intervalSeconds={30} />
+          </div>
         </div>
         <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
           <a
@@ -282,11 +292,11 @@ export default async function AdminDashboard() {
       <Section title="Overview">
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12 }}>
           <StatCard label="Total Moments" value={totalMoments ?? 0} />
+          <StatCard label="This Week" value={momentsThisWeek ?? 0} change="acts shared last 7 days" />
+          <StatCard label="Today" value={todayCount} change={changeVsYesterday} />
           <StatCard label="Total Users" value={totalUsers ?? 0} />
           <StatCard label="Total Saves" value={totalSaves ?? 0} />
           <StatCard label="Total Shares Sent" value={totalShares ?? 0} />
-          <StatCard label="Unique Link Opens" value={uniqueOpens} />
-          <StatCard label="Total Chains" value={totalChains ?? 0} />
           <StatCard label="Moments Today" value={todayCount} change={changeVsYesterday} />
         </div>
       </Section>
