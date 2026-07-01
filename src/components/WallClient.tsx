@@ -14,7 +14,7 @@ import { Moment } from '@/lib/types'
 type View = 'wall' | 'chain' | 'profile'
 
 export default function WallClient({ initialMoments }: { initialMoments: Moment[] }) {
-  const [view, setView] = useState<View>('wall')
+  const [view, setView] = useState<View>('chain')
   const [session, setSession] = useState<Session | null>(null)
   const [savedIds, setSavedIds] = useState<Set<string>>(new Set())
   const [showAuthGate, setShowAuthGate] = useState(false)
