@@ -217,13 +217,14 @@ export default function ChainTab({ initialRef }: { initialRef?: string }) {
   return (
     <div className="pb-36">
       <div className="mb-8 text-center">
-        <p className="font-serif text-[18px] leading-[1.6] text-[var(--ink)] mb-2">
-          pay it forward, one act at a time.
+        <h1 className="font-serif text-[30px] leading-[1.3] text-[var(--ink)] mb-3">
+          the kindness collective
+        </h1>
+        <p className="font-serif text-[18px] leading-[1.6] text-[var(--ink-soft)] mb-4">
+          hey there, did something nice to someone lately?
         </p>
         <p className="text-[13px] leading-[1.7] text-[var(--ink-faint)] max-w-sm mx-auto mb-6">
-          post an act of kindness, get a link, share it. whoever posts through your link becomes
-          the next person in your chain — and their link starts a new branch. we&apos;re trying
-          to reach 1,000,000 acts.
+          tell us about it and invite your friends to join your chain! we are on a mission to ignite 1 million acts of kindness this week. together, let&apos;s see just how far your single act of good can travel.
         </p>
         <ChainCounter />
       </div>
