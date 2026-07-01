@@ -5,15 +5,22 @@ import { useRouter } from 'next/navigation'
 import { getSession, type Session } from '@/lib/session'
 import { createClient } from '@/lib/supabase/client'
 
-type MyMoment = { id: string; kindness: string; created_at: string }
+type ChainMoment = {
+  id: string
+  kindness: string
+  created_at: string
+  location: string | null
+  chain_id: string | null
+  parent_moment_id: string | null
+  user_id: string | null
+}
 
 function toIndianNumber(n: number): string {
   const s = Math.round(n).toString()
   if (s.length <= 3) return s
   const last3 = s.slice(-3)
   const rest = s.slice(0, s.length - 3)
-  const restFormatted = rest.replace(/\B(?=(\d{2})+(?!\d))/g, ',')
-  return `${restFormatted},${last3}`
+  return rest.replace(/\B(?=(\d{2})+(?!\d))/g, ',') + ',' + last3
 }
 
 function relativeTime(dateStr: string): string {
@@ -29,11 +36,37 @@ function relativeTime(dateStr: string): string {
   return `${Math.floor(days / 7)}w ago`
 }
 
+function numberToWords(n: number): string {
+  const ones = ['', 'one', 'two', 'three', 'four', 'five', 'six', 'seven', 'eight', 'nine', 'ten',
+    'eleven', 'twelve', 'thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen', 'nineteen', 'twenty']
+  const tens = ['', '', 'twenty', 'thirty', 'forty', 'fifty', 'sixty', 'seventy', 'eighty', 'ninety']
+  if (n <= 20) return ones[n]
+  const t = Math.floor(n / 10), o = n % 10
+  return o === 0 ? tens[t] : `${tens[t]}-${ones[o]}`
+}
+
+function encouragingLine(count: number): string {
+  if (count === 0) return "your chain hasn't started yet. share your link and light it up."
+  if (count <= 5) return 'something you started is beginning to move.'
+  if (count <= 100) return `something you did is still moving. ${numberToWords(count)} people chose to keep it going.`
+  return 'you started something that took on a life of its own.'
+}
+
+function calcDepth(moments: ChainMoment[], momentId: string, visited = new Set<string>()): number {
+  if (visited.has(momentId)) return 0
+  visited.add(momentId)
+  const children = moments.filter(m => m.parent_moment_id === momentId)
+  if (children.length === 0) return 0
+  return 1 + Math.max(...children.map(c => calcDepth(moments, c.id, visited)))
+}
+
 export default function MillionCounter({ total, goal }: { total: number; goal: number }) {
   const [barWidth, setBarWidth] = useState(0)
   const [session, setSession] = useState<Session | null>(null)
-  const [myMoments, setMyMoments] = useState<MyMoment[]>([])
-  const [copiedId, setCopiedId] = useState<string | null>(null)
+  const [myMoments, setMyMoments] = useState<ChainMoment[]>([])
+  const [chainMoments, setChainMoments] = useState<ChainMoment[]>([])
+  const [dataLoaded, setDataLoaded] = useState(false)
+  const [linkCopied, setLinkCopied] = useState(false)
   const chainRef = useRef<HTMLDivElement>(null)
   const router = useRouter()
 
@@ -41,31 +74,62 @@ export default function MillionCounter({ total, goal }: { total: number; goal: n
     const s = getSession()
     setSession(s)
 
-    // animate progress bar
     const t = setTimeout(() => setBarWidth(Math.min((total / goal) * 100, 100)), 80)
 
     if (s) {
       const supabase = createClient()
       supabase
         .from('moments')
-        .select('id, kindness, created_at')
+        .select('id, kindness, created_at, location, chain_id, parent_moment_id, user_id')
         .eq('user_id', s.id)
         .order('created_at', { ascending: false })
-        .then(({ data }) => {
-          if (data && data.length > 0) {
-            setMyMoments(data as MyMoment[])
-            // auto-scroll if redirected back with #chain
-            if (window.location.hash === '#chain') {
-              setTimeout(() => {
-                chainRef.current?.scrollIntoView({ behavior: 'smooth' })
-              }, 150)
-            }
+        .then(async ({ data }) => {
+          const mine = (data ?? []) as ChainMoment[]
+          setMyMoments(mine)
+
+          const chainId = mine.find(m => m.chain_id)?.chain_id
+          if (chainId) {
+            const { data: chain } = await supabase
+              .from('moments')
+              .select('id, kindness, created_at, location, chain_id, parent_moment_id, user_id')
+              .eq('chain_id', chainId)
+              .order('created_at', { ascending: true })
+            setChainMoments((chain ?? []) as ChainMoment[])
+          }
+
+          setDataLoaded(true)
+
+          if (window.location.hash === '#chain') {
+            setTimeout(() => chainRef.current?.scrollIntoView({ behavior: 'smooth' }), 200)
           }
         })
+    } else {
+      setDataLoaded(true)
     }
 
     return () => clearTimeout(t)
   }, [total, goal])
+
+  const hasMyMoments = myMoments.length > 0
+  const actsFromLink = chainMoments.filter(m => m.user_id !== session?.id).length
+
+  const myRootMoment = [...myMoments]
+    .filter(m => m.chain_id)
+    .sort((a, b) => a.created_at.localeCompare(b.created_at))[0]
+  const depth = myRootMoment ? calcDepth(chainMoments, myRootMoment.id) : 0
+
+  const inviteUrl = session
+    ? `${typeof window !== 'undefined' ? window.location.origin : ''}/join?ref=${session.id}`
+    : ''
+  const inviteMsg = `Someone shared an act of kindness and started a chain.\nNow it's your turn. Add your own act and join the chain.\nTogether, we're building 1,000,000 acts this week. Let's go. ${inviteUrl}`
+
+  async function shareLink() {
+    try {
+      await navigator.clipboard.writeText(inviteMsg)
+      setLinkCopied(true)
+      setTimeout(() => setLinkCopied(false), 2000)
+    } catch {}
+  }
 
   function scrollToChain() {
     chainRef.current?.scrollIntoView({ behavior: 'smooth' })
@@ -78,18 +142,6 @@ export default function MillionCounter({ total, goal }: { total: number; goal: n
       router.push('/login?next=' + encodeURIComponent('/onemillionkind#chain'))
     }
   }
-
-  async function passItOn(momentId: string) {
-    const url = `${window.location.origin}/m/${momentId}`
-    const msg = `Someone shared an act of kindness and started a chain.\nNow it's your turn. Add your own act and join the chain.\nTogether, we're building 1,000,000 acts this week. Let's go. ${url}`
-    try {
-      await navigator.clipboard.writeText(msg)
-      setCopiedId(momentId)
-      setTimeout(() => setCopiedId(null), 2000)
-    } catch {}
-  }
-
-  const hasChain = session !== null && myMoments.length > 0
 
   return (
     <div className="px-5 py-6">
@@ -121,14 +173,11 @@ export default function MillionCounter({ total, goal }: { total: number; goal: n
         </div>
       </div>
 
-      {/* highlight bar — only when logged in + has moments */}
-      {hasChain && (
+      {/* highlight bar — logged in + has moments (only after data loads) */}
+      {dataLoaded && session && hasMyMoments && (
         <div
           className="w-full flex items-center justify-between rounded-2xl px-5 py-4 mb-10"
-          style={{
-            background: '#edf2ec',
-            border: '1px solid #d4e3d2',
-          }}
+          style={{ background: '#edf2ec', border: '1px solid #d4e3d2' }}
         >
           <span className="font-serif text-[15px] leading-snug" style={{ color: '#3d5c3a' }}>
             your chain is growing ✦
@@ -169,37 +218,160 @@ export default function MillionCounter({ total, goal }: { total: number; goal: n
         start a chain
       </button>
 
-      {/* chain view — only when logged in + has moments */}
-      {hasChain && (
+      {/* chain view — only for logged-in users */}
+      {dataLoaded && session && (
         <div ref={chainRef} id="chain" className="mt-16 pt-2">
-          <p className="text-[11px] font-semibold text-[var(--ink-faint)] uppercase tracking-[0.08em] mb-5">
-            your chain so far
-          </p>
-          <div className="flex flex-col gap-3">
-            {myMoments.map((m) => (
-              <div
-                key={m.id}
-                className="rounded-2xl px-5 py-4"
-                style={{ background: '#fdf0e6', border: '1px solid #f0d5be' }}
+
+          {/* section header */}
+          <div className="flex items-center justify-between mb-7">
+            <p className="text-[11px] font-semibold text-[var(--ink-faint)] uppercase tracking-[0.08em]">
+              your chain so far
+            </p>
+            <div className="relative">
+              <button
+                onClick={shareLink}
+                className="text-[13px] font-semibold"
+                style={{ color: 'var(--accent)' }}
               >
-                <p className="font-serif text-[15px] leading-[1.55] text-[var(--ink)] mb-3 line-clamp-3">
-                  {m.kindness}
-                </p>
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px]" style={{ color: 'var(--ink-faint)' }}>
-                    {relativeTime(m.created_at)}
-                  </span>
-                  <button
-                    onClick={() => passItOn(m.id)}
-                    className="text-[12px] font-semibold transition-colors"
-                    style={{ color: copiedId === m.id ? '#3d5c3a' : 'var(--accent)' }}
-                  >
-                    {copiedId === m.id ? 'copied ✓' : 'pass it on'}
-                  </button>
-                </div>
-              </div>
-            ))}
+                share your link ↗
+              </button>
+              {linkCopied && (
+                <span
+                  className="absolute -top-9 right-0 text-white text-[11px] px-3 py-1.5 rounded-lg whitespace-nowrap"
+                  style={{ background: 'var(--ink)', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
+                >
+                  link copied
+                </span>
+              )}
+            </div>
           </div>
+
+          {/* counter card */}
+          <div
+            className="rounded-2xl px-6 py-7 mb-8"
+            style={{ background: '#2C2018' }}
+          >
+            <p className="text-[10px] font-semibold tracking-[0.12em] uppercase mb-5" style={{ color: '#8a7060' }}>
+              kind acts started from your link
+            </p>
+            <p className="font-serif text-[56px] leading-none font-bold text-white mb-2">
+              {actsFromLink}
+            </p>
+            <p className="text-[13px] mb-6" style={{ color: '#c8a87e' }}>
+              across {depth} round{depth !== 1 ? 's' : ''} of the chain
+            </p>
+            <div className="h-px mb-6" style={{ background: 'rgba(255,255,255,0.08)' }} />
+            <p className="font-serif italic text-[15px] leading-[1.65]" style={{ color: '#c8a87e' }}>
+              {encouragingLine(actsFromLink)}
+            </p>
+          </div>
+
+          {/* empty state */}
+          {chainMoments.length === 0 && (
+            <div
+              className="rounded-2xl px-5 py-7 text-center"
+              style={{ border: '1.5px dashed #d4b89a' }}
+            >
+              <p className="font-serif text-[16px] leading-[1.65] text-[var(--ink-soft)]">
+                your chain starts with your first share. pass it on.
+              </p>
+              <button
+                onClick={shareLink}
+                className="mt-4 text-[13px] font-semibold underline underline-offset-2"
+                style={{ color: 'var(--accent)' }}
+              >
+                share your link ↗
+              </button>
+            </div>
+          )}
+
+          {/* chain cards with vertical line */}
+          {chainMoments.length > 0 && (
+            <div>
+              {chainMoments.map((m, i) => {
+                const isLast = i === chainMoments.length - 1
+                const isMe = m.user_id === session.id
+                return (
+                  <div key={m.id} className="flex gap-3">
+                    {/* dot + line */}
+                    <div className="flex flex-col items-center" style={{ width: 14, flexShrink: 0 }}>
+                      <div
+                        className="rounded-full"
+                        style={{
+                          width: 10,
+                          height: 10,
+                          marginTop: 15,
+                          flexShrink: 0,
+                          background: isMe ? 'var(--accent)' : 'rgba(194,103,76,0.4)',
+                          boxShadow: isMe ? '0 0 0 3px rgba(194,103,76,0.15)' : 'none',
+                        }}
+                      />
+                      {!isLast && (
+                        <div
+                          style={{
+                            width: 2,
+                            flexGrow: 1,
+                            minHeight: 16,
+                            marginTop: 3,
+                            background: 'rgba(194,103,76,0.22)',
+                            borderRadius: 1,
+                          }}
+                        />
+                      )}
+                    </div>
+
+                    {/* card */}
+                    <div className="flex-1 mb-3">
+                      <div
+                        className="rounded-2xl px-4 py-4"
+                        style={{
+                          background: isMe ? '#fdf0e6' : '#faf6f1',
+                          border: `1px solid ${isMe ? '#f0d5be' : '#ede3d8'}`,
+                        }}
+                      >
+                        <p className="font-serif text-[14px] leading-[1.6] text-[var(--ink)] mb-2.5 line-clamp-3">
+                          {m.kindness}
+                        </p>
+                        <p className="text-[11px]" style={{ color: 'var(--ink-faint)' }}>
+                          {relativeTime(m.created_at)}
+                          {m.location && <span> · {m.location}</span>}
+                          {isMe && (
+                            <span className="ml-2 font-medium" style={{ color: 'rgba(194,103,76,0.7)' }}>you</span>
+                          )}
+                        </p>
+
+                        {/* add another act — inside the last card */}
+                        {isLast && (
+                          <div className="mt-3 pt-3" style={{ borderTop: `1px solid ${isMe ? '#f0d5be' : '#ede3d8'}` }}>
+                            <button
+                              onClick={() => router.push('/share')}
+                              className="text-[13px] font-semibold"
+                              style={{ color: 'var(--accent)' }}
+                            >
+                              add another act →
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+
+              {/* terminal open dot */}
+              <div className="flex gap-3 items-center pl-[2px]">
+                <div
+                  className="rounded-full"
+                  style={{
+                    width: 10,
+                    height: 10,
+                    border: '2px solid rgba(194,103,76,0.3)',
+                    flexShrink: 0,
+                  }}
+                />
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

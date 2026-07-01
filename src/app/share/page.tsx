@@ -152,12 +152,19 @@ export default function SharePage() {
   const [submitted, setSubmitted] = useState(false)
   const [copied, setCopied] = useState(false)
   const [formEventId, setFormEventId] = useState<string | undefined>()
+  const [invitedByUserId, setInvitedByUserId] = useState<string | null>(null)
   const router = useRouter()
 
   useEffect(() => {
     const session = getSession()
     if (!session) { router.replace('/login'); return }
     trackFormStarted(session.id).then(setFormEventId)
+
+    const chainRef = sessionStorage.getItem('chain_ref')
+    if (chainRef) {
+      setInvitedByUserId(chainRef)
+      sessionStorage.removeItem('chain_ref')
+    }
   }, [router])
 
   async function handleSubmit(e: React.FormEvent) {
@@ -176,6 +183,26 @@ export default function SharePage() {
       location: location.trim() || null,
     }
     if (session?.id) insert.user_id = session.id
+
+    if (invitedByUserId) {
+      const { data: parentMoment } = await supabase
+        .from('moments')
+        .select('id, chain_id')
+        .eq('user_id', invitedByUserId)
+        .not('chain_id', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+      if (parentMoment) {
+        insert.chain_id = parentMoment.chain_id
+        insert.parent_moment_id = parentMoment.id
+        insert.invited_by_user_id = invitedByUserId
+      } else {
+        insert.chain_id = crypto.randomUUID()
+      }
+    } else {
+      insert.chain_id = crypto.randomUUID()
+    }
 
     const { error: err } = await supabase.from('moments').insert(insert)
     if (err) {
