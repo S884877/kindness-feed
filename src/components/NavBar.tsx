@@ -16,21 +16,13 @@ export default function NavBar() {
         <Link href="/" className="font-serif text-[var(--ink)] text-xl tracking-tight">
           the kindness wall
         </Link>
-        <div className="flex flex-col items-end" style={{ gap: '8px' }}>
-          <div className="flex items-center gap-4">
-            <Link
-              href="/onemillionkind"
-              className="text-xs text-[var(--ink-faint)] hover:text-[var(--ink)] transition-colors leading-none"
-            >
-              onemillionkind
-            </Link>
-            <Link
-              href="/about"
-              className="text-xs text-[var(--ink-faint)] hover:text-[var(--ink)] transition-colors leading-none"
-            >
-              how this started
-            </Link>
-          </div>
+        <div className="flex items-center gap-4">
+          <Link
+            href="/about"
+            className="text-xs text-[var(--ink-faint)] hover:text-[var(--ink)] transition-colors leading-none"
+          >
+            how this started
+          </Link>
           <NavProfile />
         </div>
       </nav>

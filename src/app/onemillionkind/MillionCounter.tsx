@@ -60,7 +60,17 @@ function calcDepth(moments: ChainMoment[], momentId: string, visited = new Set<s
   return 1 + Math.max(...children.map(c => calcDepth(moments, c.id, visited)))
 }
 
-export default function MillionCounter({ total, goal }: { total: number; goal: number }) {
+const FIELDS = 'id, kindness, created_at, location, chain_id, parent_moment_id, user_id'
+
+export default function MillionCounter({
+  total,
+  goal,
+  refAccountId,
+}: {
+  total: number
+  goal: number
+  refAccountId: string | null
+}) {
   const [barWidth, setBarWidth] = useState(0)
   const [session, setSession] = useState<Session | null>(null)
   const [myMoments, setMyMoments] = useState<ChainMoment[]>([])
@@ -76,11 +86,36 @@ export default function MillionCounter({ total, goal }: { total: number; goal: n
 
     const t = setTimeout(() => setBarWidth(Math.min((total / goal) * 100, 100)), 80)
 
-    if (s) {
-      const supabase = createClient()
+    const supabase = createClient()
+
+    if (refAccountId) {
+      // show the inviter's chain
       supabase
         .from('moments')
-        .select('id, kindness, created_at, location, chain_id, parent_moment_id, user_id')
+        .select(FIELDS)
+        .eq('user_id', refAccountId)
+        .not('chain_id', 'is', null)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+        .then(async ({ data: root }) => {
+          if (root?.chain_id) {
+            const { data: chain } = await supabase
+              .from('moments')
+              .select(FIELDS)
+              .eq('chain_id', root.chain_id)
+              .order('created_at', { ascending: true })
+            setChainMoments((chain ?? []) as ChainMoment[])
+          }
+          setDataLoaded(true)
+          if (window.location.hash === '#chain') {
+            setTimeout(() => chainRef.current?.scrollIntoView({ behavior: 'smooth' }), 200)
+          }
+        })
+    } else if (s) {
+      supabase
+        .from('moments')
+        .select(FIELDS)
         .eq('user_id', s.id)
         .order('created_at', { ascending: false })
         .then(async ({ data }) => {
@@ -91,7 +126,7 @@ export default function MillionCounter({ total, goal }: { total: number; goal: n
           if (chainId) {
             const { data: chain } = await supabase
               .from('moments')
-              .select('id, kindness, created_at, location, chain_id, parent_moment_id, user_id')
+              .select(FIELDS)
               .eq('chain_id', chainId)
               .order('created_at', { ascending: true })
             setChainMoments((chain ?? []) as ChainMoment[])
@@ -108,20 +143,27 @@ export default function MillionCounter({ total, goal }: { total: number; goal: n
     }
 
     return () => clearTimeout(t)
-  }, [total, goal])
+  }, [total, goal, refAccountId])
 
   const hasMyMoments = myMoments.length > 0
-  const actsFromLink = chainMoments.filter(m => m.user_id !== session?.id).length
 
-  const myRootMoment = [...myMoments]
-    .filter(m => m.chain_id)
+  // when viewing own chain: acts from others + depth from user's root
+  const ownChainOwnerId = session?.id ?? null
+  const chainOwnerForCounters = refAccountId ?? ownChainOwnerId
+  const actsFromLink = chainMoments.filter(m => m.user_id !== chainOwnerForCounters).length
+
+  const ownerRootMoment = chainMoments
+    .filter(m => m.user_id === chainOwnerForCounters && !m.parent_moment_id)
     .sort((a, b) => a.created_at.localeCompare(b.created_at))[0]
-  const depth = myRootMoment ? calcDepth(chainMoments, myRootMoment.id) : 0
+    ?? chainMoments
+      .filter(m => m.user_id === chainOwnerForCounters)
+      .sort((a, b) => a.created_at.localeCompare(b.created_at))[0]
+  const depth = ownerRootMoment ? calcDepth(chainMoments, ownerRootMoment.id) : 0
 
   const inviteUrl = session
     ? `${typeof window !== 'undefined' ? window.location.origin : ''}/join?ref=${session.id}`
     : ''
-  const inviteMsg = `Someone shared an act of kindness and started a chain.\nNow it's your turn. Add your own act and join the chain.\nTogether, we're building 1,000,000 acts this week. Let's go. ${inviteUrl}`
+  const inviteMsg = `Someone shared an act of kindness and started a chain.\nNow it's your turn. Share something kind that you did and join the chain.\nTogether, we're building 1,000,000 acts this week. Let's go. ${inviteUrl}`
 
   async function shareLink() {
     try {
@@ -143,23 +185,22 @@ export default function MillionCounter({ total, goal }: { total: number; goal: n
     }
   }
 
+  const showChainSection = dataLoaded && (refAccountId ? chainMoments.length > 0 : !!session)
+  const isRefView = !!refAccountId
+
   return (
     <div className="px-5 py-6">
       <h1 className="font-serif text-[30px] leading-tight text-[var(--ink)] mb-10 tracking-tight">
-        theonemillionkind
+        the kind collective
       </h1>
 
       {/* counter + progress bar */}
-      <div className="mb-10">
-        <p className="text-[12px] font-medium text-[var(--ink-faint)] uppercase tracking-[0.08em] mb-3">
-          acts of kindness this week
-        </p>
-        <p className="font-serif text-[36px] leading-none text-[var(--ink)] mb-1">
+      <div className="mb-10 text-center">
+        <p className="font-serif text-[48px] leading-none text-[var(--ink)] mb-2">
           {toIndianNumber(total)}
-          <span className="text-[22px] text-[var(--ink-faint)] ml-2">/ {toIndianNumber(goal)}</span>
         </p>
-        <p className="text-[12px] text-[var(--ink-faint)] mb-5">
-          {((total / goal) * 100).toFixed(2)}% of the goal
+        <p className="text-[14px] text-[var(--ink-soft)] mb-5">
+          kind acts this week
         </p>
         <div className="h-2.5 w-full rounded-full overflow-hidden" style={{ background: '#e4d8cc' }}>
           <div
@@ -173,8 +214,8 @@ export default function MillionCounter({ total, goal }: { total: number; goal: n
         </div>
       </div>
 
-      {/* highlight bar — logged in + has moments (only after data loads) */}
-      {dataLoaded && session && hasMyMoments && (
+      {/* highlight bar — logged in + has moments + not in ref view */}
+      {dataLoaded && !isRefView && session && hasMyMoments && (
         <div
           className="w-full flex items-center justify-between rounded-2xl px-5 py-4 mb-10"
           style={{ background: '#edf2ec', border: '1px solid #d4e3d2' }}
@@ -197,6 +238,40 @@ export default function MillionCounter({ total, goal }: { total: number; goal: n
         pay it forward, one kind act at a time.
       </p>
 
+      {/* invitation block — only when arriving via ref link */}
+      {isRefView && (
+        <div
+          className="rounded-2xl px-5 py-7 mb-10 text-center"
+          style={{ background: '#edf2ec', border: '1px solid #d4e3d2' }}
+        >
+          <p className="font-serif text-[17px] leading-[1.6] mb-1" style={{ color: '#3d5c3a' }}>
+            you've been invited to add to this chain.
+          </p>
+          <p className="font-serif text-[17px] leading-[1.6] mb-7" style={{ color: '#3d5c3a' }}>
+            do something kind and share it here to keep it going.
+          </p>
+          <div className="flex items-center justify-center gap-3">
+            <button
+              onClick={() => router.push('/share')}
+              className="press text-white font-semibold px-6 py-3 rounded-full text-[14px]"
+              style={{
+                background: 'linear-gradient(135deg, #cf7152, #b85a3e)',
+                boxShadow: '0 4px 16px -4px rgba(184,90,62,0.45)',
+              }}
+            >
+              add my act
+            </button>
+            <button
+              onClick={scrollToChain}
+              className="press font-semibold px-6 py-3 rounded-full text-[14px] border"
+              style={{ color: 'var(--accent)', borderColor: 'rgba(194,103,76,0.3)' }}
+            >
+              see the chain
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* mission block */}
       <div className="font-serif text-[17px] leading-[1.75] text-[var(--ink)] mb-12 flex flex-col gap-5">
         <p>post an act of kindness. get a link. share it with your friends.</p>
@@ -218,32 +293,34 @@ export default function MillionCounter({ total, goal }: { total: number; goal: n
         start a chain
       </button>
 
-      {/* chain view — only for logged-in users */}
-      {dataLoaded && session && (
+      {/* chain view */}
+      {showChainSection && (
         <div ref={chainRef} id="chain" className="mt-16 pt-2">
 
           {/* section header */}
           <div className="flex items-center justify-between mb-7">
             <p className="text-[11px] font-semibold text-[var(--ink-faint)] uppercase tracking-[0.08em]">
-              your chain so far
+              {isRefView ? 'the chain so far' : 'your chain so far'}
             </p>
-            <div className="relative">
-              <button
-                onClick={shareLink}
-                className="text-[13px] font-semibold"
-                style={{ color: 'var(--accent)' }}
-              >
-                share your link ↗
-              </button>
-              {linkCopied && (
-                <span
-                  className="absolute -top-9 right-0 text-white text-[11px] px-3 py-1.5 rounded-lg whitespace-nowrap"
-                  style={{ background: 'var(--ink)', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
+            {!isRefView && session && (
+              <div className="relative">
+                <button
+                  onClick={shareLink}
+                  className="text-[13px] font-semibold"
+                  style={{ color: 'var(--accent)' }}
                 >
-                  link copied
-                </span>
-              )}
-            </div>
+                  share your link ↗
+                </button>
+                {linkCopied && (
+                  <span
+                    className="absolute -top-9 right-0 text-white text-[11px] px-3 py-1.5 rounded-lg whitespace-nowrap"
+                    style={{ background: 'var(--ink)', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}
+                  >
+                    link copied
+                  </span>
+                )}
+              </div>
+            )}
           </div>
 
           {/* counter card */}
@@ -252,7 +329,7 @@ export default function MillionCounter({ total, goal }: { total: number; goal: n
             style={{ background: '#2C2018' }}
           >
             <p className="text-[10px] font-semibold tracking-[0.12em] uppercase mb-5" style={{ color: '#8a7060' }}>
-              kind acts started from your link
+              {isRefView ? 'kind acts in this chain' : 'kind acts started from your link'}
             </p>
             <p className="font-serif text-[56px] leading-none font-bold text-white mb-2">
               {actsFromLink}
@@ -266,8 +343,8 @@ export default function MillionCounter({ total, goal }: { total: number; goal: n
             </p>
           </div>
 
-          {/* empty state */}
-          {chainMoments.length === 0 && (
+          {/* empty state — only for own chain */}
+          {!isRefView && chainMoments.length === 0 && (
             <div
               className="rounded-2xl px-5 py-7 text-center"
               style={{ border: '1.5px dashed #d4b89a' }}
@@ -285,15 +362,14 @@ export default function MillionCounter({ total, goal }: { total: number; goal: n
             </div>
           )}
 
-          {/* chain cards with vertical line */}
+          {/* chain cards */}
           {chainMoments.length > 0 && (
             <div>
               {chainMoments.map((m, i) => {
                 const isLast = i === chainMoments.length - 1
-                const isMe = m.user_id === session.id
+                const isOwner = m.user_id === chainOwnerForCounters
                 return (
                   <div key={m.id} className="flex gap-3">
-                    {/* dot + line */}
                     <div className="flex flex-col items-center" style={{ width: 14, flexShrink: 0 }}>
                       <div
                         className="rounded-full"
@@ -302,8 +378,8 @@ export default function MillionCounter({ total, goal }: { total: number; goal: n
                           height: 10,
                           marginTop: 15,
                           flexShrink: 0,
-                          background: isMe ? 'var(--accent)' : 'rgba(194,103,76,0.4)',
-                          boxShadow: isMe ? '0 0 0 3px rgba(194,103,76,0.15)' : 'none',
+                          background: isOwner ? 'var(--accent)' : 'rgba(194,103,76,0.4)',
+                          boxShadow: isOwner ? '0 0 0 3px rgba(194,103,76,0.15)' : 'none',
                         }}
                       />
                       {!isLast && (
@@ -320,13 +396,12 @@ export default function MillionCounter({ total, goal }: { total: number; goal: n
                       )}
                     </div>
 
-                    {/* card */}
                     <div className="flex-1 mb-3">
                       <div
                         className="rounded-2xl px-4 py-4"
                         style={{
-                          background: isMe ? '#fdf0e6' : '#faf6f1',
-                          border: `1px solid ${isMe ? '#f0d5be' : '#ede3d8'}`,
+                          background: isOwner ? '#fdf0e6' : '#faf6f1',
+                          border: `1px solid ${isOwner ? '#f0d5be' : '#ede3d8'}`,
                         }}
                       >
                         <p className="font-serif text-[14px] leading-[1.6] text-[var(--ink)] mb-2.5 line-clamp-3">
@@ -335,14 +410,13 @@ export default function MillionCounter({ total, goal }: { total: number; goal: n
                         <p className="text-[11px]" style={{ color: 'var(--ink-faint)' }}>
                           {relativeTime(m.created_at)}
                           {m.location && <span> · {m.location}</span>}
-                          {isMe && (
+                          {isOwner && !isRefView && (
                             <span className="ml-2 font-medium" style={{ color: 'rgba(194,103,76,0.7)' }}>you</span>
                           )}
                         </p>
 
-                        {/* add another act — inside the last card */}
-                        {isLast && (
-                          <div className="mt-3 pt-3" style={{ borderTop: `1px solid ${isMe ? '#f0d5be' : '#ede3d8'}` }}>
+                        {isLast && !isRefView && (
+                          <div className="mt-3 pt-3" style={{ borderTop: `1px solid ${isOwner ? '#f0d5be' : '#ede3d8'}` }}>
                             <button
                               onClick={() => router.push('/share')}
                               className="text-[13px] font-semibold"
@@ -358,7 +432,6 @@ export default function MillionCounter({ total, goal }: { total: number; goal: n
                 )
               })}
 
-              {/* terminal open dot */}
               <div className="flex gap-3 items-center pl-[2px]">
                 <div
                   className="rounded-full"

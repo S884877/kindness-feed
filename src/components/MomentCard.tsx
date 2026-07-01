@@ -105,7 +105,7 @@ export default function MomentCard({
   async function share() {
     if (!session) { onAuthRequired?.(); return }
     const url = `${window.location.origin}/m/${moment.id}`
-    const inviteMsg = `Someone shared an act of kindness and started a chain.\nNow it's your turn. Add your own act and join the chain.\nTogether, we're building 1,000,000 acts this week. Let's go. ${url}`
+    const inviteMsg = `Someone shared an act of kindness and started a chain.\nNow it's your turn. Share something kind that you did and join the chain.\nTogether, we're building 1,000,000 acts this week. Let's go. ${url}`
     try {
       await navigator.clipboard.writeText(inviteMsg)
       setCopied(true)
