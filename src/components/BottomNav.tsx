@@ -69,18 +69,18 @@ export default function BottomNav({
       <button
         onClick={onShare}
         aria-label="share a moment"
-        className="flex items-center justify-center rounded-full -mt-4"
+        className="flex items-center justify-center rounded-full px-4 -mt-3"
         style={{
-          width: '48px',
-          height: '48px',
+          height: '40px',
           background: 'linear-gradient(135deg, #cf7152, #b85a3e)',
           boxShadow: '0 4px 14px -2px rgba(184,90,62,0.5)',
+          fontSize: '13px',
+          fontWeight: 600,
+          color: 'white',
+          whiteSpace: 'nowrap',
         }}
       >
-        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <line x1="12" y1="5" x2="12" y2="19" />
-          <line x1="5" y1="12" x2="19" y2="12" />
-        </svg>
+        share a moment
       </button>
 
       <button

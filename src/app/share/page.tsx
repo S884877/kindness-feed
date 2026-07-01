@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { getSession } from '@/lib/session'
+import { trackFormStarted, trackFormCompleted } from '@/lib/metrics'
 
 const MAX_WORDS = 350
 
@@ -49,11 +50,13 @@ export default function SharePage() {
   const [error, setError] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [formEventId, setFormEventId] = useState<string | undefined>()
   const router = useRouter()
 
   useEffect(() => {
     const session = getSession()
-    if (!session) router.replace('/login')
+    if (!session) { router.replace('/login'); return }
+    trackFormStarted(session.id).then(setFormEventId)
   }, [router])
 
   async function handleSubmit(e: React.FormEvent) {
@@ -81,6 +84,7 @@ export default function SharePage() {
       return
     }
 
+    if (formEventId) trackFormCompleted(formEventId)
     router.refresh()
     setLoading(false)
     setSubmitted(true)

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { saveSession } from '@/lib/session'
+import { trackLogin } from '@/lib/metrics'
 import Link from 'next/link'
 
 export default function SignupPage() {
@@ -30,6 +31,7 @@ export default function SignupPage() {
       return
     }
     saveSession({ id: data.id, email: data.email })
+    trackLogin(data.id)
     router.push('/')
   }
 

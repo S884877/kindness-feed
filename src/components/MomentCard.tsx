@@ -135,7 +135,7 @@ export default function MomentCard({
       className="moment-card rise-in overflow-hidden"
       style={{ animationDelay: `${Math.min(index, 8) * 70}ms` }}
     >
-      <div className="px-7 pt-6 pb-5">
+      <div className="px-7 pt-6">
         <div className="flex items-center justify-end mb-5">
           <span className="text-xs text-[var(--ink-faint)]">{relativeTime(moment.created_at)}</span>
         </div>
@@ -144,12 +144,12 @@ export default function MomentCard({
           {moment.kindness}
         </p>
 
-        <p className="font-serif italic text-[17px] leading-[1.55] text-[var(--ink-soft)]">
+        <p className="font-serif italic text-[17px] leading-[1.55] text-[var(--ink-soft)] mb-6">
           {moment.feeling}
         </p>
 
         {moment.image_url && (
-          <div className="mt-5 -mx-7">
+          <div className="-mx-7 mb-0">
             <img
               src={moment.image_url}
               alt=""
@@ -172,7 +172,7 @@ export default function MomentCard({
           <span>hold onto this</span>
         </button>
 
-        <div className="relative">
+        <div className="flex flex-col items-end gap-1">
           <button
             onClick={share}
             disabled={sharing}
@@ -182,9 +182,7 @@ export default function MomentCard({
             <span>{sharing ? 'creating image…' : 'pass it on'}</span>
           </button>
           {copied && (
-            <span className="absolute -top-9 right-0 bg-[var(--ink)] text-white text-xs px-3 py-1.5 rounded-lg whitespace-nowrap shadow-md">
-              link copied
-            </span>
+            <span className="text-[11px] text-[var(--ink-faint)]">link copied</span>
           )}
         </div>
       </div>
