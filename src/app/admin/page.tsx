@@ -94,6 +94,7 @@ export default async function AdminDashboard() {
     { count: totalUsers },
     { count: totalShares },
     { count: totalActs },
+    { count: totalSaves },
     { count: momentsToday },
     { count: momentsYesterday },
     { data: linkOpensRaw },
@@ -110,6 +111,7 @@ export default async function AdminDashboard() {
     supabase.from('accounts').select('*', { count: 'exact', head: true }),
     supabase.from('share_clicks').select('*', { count: 'exact', head: true }),
     supabase.from('acts').select('*', { count: 'exact', head: true }),
+    supabase.from('saved_moments').select('*', { count: 'exact', head: true }),
     supabase.from('moments').select('*', { count: 'exact', head: true }).gte('created_at', todayStr),
     supabase.from('moments').select('*', { count: 'exact', head: true }).gte('created_at', yesterdayStr).lt('created_at', todayStr),
     supabase.from('chain_link_opens').select('chain_id, visitor_fingerprint'),
@@ -258,24 +260,33 @@ export default async function AdminDashboard() {
             {new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}
           </p>
         </div>
-        <form action="/api/admin/logout" method="POST">
-          <button
-            type="submit"
-            style={{ fontSize: 13, color: '#888', background: 'none', border: 'none', cursor: 'pointer' }}
+        <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+          <a
+            href="/admin"
+            style={{ fontSize: 13, color: '#c2674c', textDecoration: 'none', fontWeight: 500 }}
           >
-            Sign out
-          </button>
-        </form>
+            ↻ Refresh
+          </a>
+          <form action="/api/admin/logout" method="POST">
+            <button
+              type="submit"
+              style={{ fontSize: 13, color: '#888', background: 'none', border: 'none', cursor: 'pointer' }}
+            >
+              Sign out
+            </button>
+          </form>
+        </div>
       </div>
 
       {/* Section 1 — Overview */}
       <Section title="Overview">
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12 }}>
           <StatCard label="Total Moments" value={totalMoments ?? 0} />
-          <StatCard label="Total Chains" value={totalChains ?? 0} />
           <StatCard label="Total Users" value={totalUsers ?? 0} />
-          <StatCard label="Unique Link Opens" value={uniqueOpens} />
+          <StatCard label="Total Saves" value={totalSaves ?? 0} />
           <StatCard label="Total Shares Sent" value={totalShares ?? 0} />
+          <StatCard label="Unique Link Opens" value={uniqueOpens} />
+          <StatCard label="Total Chains" value={totalChains ?? 0} />
           <StatCard label="Moments Today" value={todayCount} change={changeVsYesterday} />
         </div>
       </Section>
