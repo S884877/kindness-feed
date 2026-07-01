@@ -4,11 +4,13 @@ import { signAdminToken } from '@/lib/adminToken'
 export async function POST(req: NextRequest) {
   const { email, password } = await req.json()
 
-  const validEmail = process.env.ADMIN_EMAIL
-  const validPassword = process.env.ADMIN_PASSWORD
-  const secret = process.env.ADMIN_SECRET ?? ''
+  const validEmail = (process.env.ADMIN_EMAIL ?? '').trim()
+  const validPassword = (process.env.ADMIN_PASSWORD ?? '').trim()
+  const secret = (process.env.ADMIN_SECRET ?? '').trim()
 
-  if (!validEmail || !validPassword || email !== validEmail || password !== validPassword) {
+  console.log('[admin/login] attempt:', email, '| env set:', !!validEmail, !!validPassword)
+
+  if (!validEmail || !validPassword || email.trim() !== validEmail || password.trim() !== validPassword) {
     return NextResponse.json({ error: 'Incorrect credentials' }, { status: 401 })
   }
 
