@@ -16,10 +16,10 @@ export default function KindnessWallLanding() {
           why? because we need more of it.
         </p>
         <div className="flex flex-wrap gap-3">
-          <Link href="/kindness-wall/post" className="kw-btn">
+          <Link href="/post" className="kw-btn">
             post something
           </Link>
-          <Link href="/kindness-wall/feed" className="kw-btn kw-btn-outline">
+          <Link href="/feed" className="kw-btn kw-btn-outline">
             the feed
           </Link>
         </div>

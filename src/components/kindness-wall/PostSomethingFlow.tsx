@@ -2,8 +2,7 @@
 
 import { useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { uploadKindnessWallImage } from '@/lib/kindnessWallUpload'
-import { ACCEPTED_IMAGE_TYPES } from '@/lib/chainUpload'
+import { uploadKindnessWallImage, ACCEPTED_IMAGE_TYPES } from '@/lib/kindnessWallUpload'
 import { KINDNESS_WALL_GOAL } from '@/lib/kindnessWall'
 
 type Step = 'form' | 'confirm' | 'share'
@@ -85,7 +84,7 @@ export default function PostSomethingFlow() {
 
   if (step === 'share') {
     const origin = typeof window !== 'undefined' ? window.location.origin : ''
-    const shareUrl = `${origin}/kindness-wall`
+    const shareUrl = origin
     const twitterText = `i just added to the kindness wall — a million small acts of kindness, one at a time. add yours: ${shareUrl}`
     const facebookText = `the kindness wall: a million kind acts, together. see what people are doing for each other: ${shareUrl}`
     const whatsappText = `i just added to the kindness wall 🤍 add your own kind act: ${shareUrl}`

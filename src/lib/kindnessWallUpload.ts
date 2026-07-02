@@ -1,6 +1,6 @@
 import { createClient } from './supabase/client'
 
-export { ACCEPTED_IMAGE_TYPES } from './chainUpload'
+export const ACCEPTED_IMAGE_TYPES = '.jpg,.jpeg,.png,.heic,.heif,.webp,image/jpeg,image/png,image/heic,image/heif,image/webp'
 
 const HEIC_TYPES = ['image/heic', 'image/heif']
 

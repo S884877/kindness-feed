@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { Space_Grotesk } from 'next/font/google'
-import './kindness-wall.css'
+import './globals.css'
 import KindnessWallLogo from '@/components/kindness-wall/KindnessWallLogo'
 import ScrollProgressBar from '@/components/kindness-wall/ScrollProgressBar'
 
