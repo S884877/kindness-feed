@@ -1,8 +1,13 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { usePathname } from 'next/navigation'
+
+const LIGHT_ROUTES = ['/post', '/feed']
 
 export default function ScrollProgressBar() {
+  const pathname = usePathname()
+  const isLight = LIGHT_ROUTES.some((route) => pathname?.startsWith(route))
   const [progress, setProgress] = useState(0)
   const [scrollable, setScrollable] = useState(false)
 
@@ -44,11 +49,11 @@ export default function ScrollProgressBar() {
   return (
     <div
       className="fixed bottom-5 left-1/2 z-40 h-[2px] w-40 -translate-x-1/2 overflow-hidden rounded-full"
-      style={{ background: 'rgba(255,255,255,0.15)' }}
+      style={{ background: isLight ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.15)' }}
     >
       <div
         className="h-full rounded-full"
-        style={{ width: `${progress}%`, background: '#ffffff', transition: 'width 0.1s linear' }}
+        style={{ width: `${progress}%`, background: isLight ? '#1a1a1a' : '#ffffff', transition: 'width 0.1s linear' }}
       />
     </div>
   )

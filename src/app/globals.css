@@ -142,3 +142,38 @@ body {
   outline: none;
   border-color: var(--kw-text-muted);
 }
+
+/* ---------- light theme variant (post + feed pages) ---------- */
+.kw-light {
+  --kw-bg: #ffffff;
+  --kw-text: #1a1a1a;
+  --kw-text-muted: #6b6b6b;
+  --kw-line: #e5e5e5;
+  background: var(--kw-bg);
+  color: var(--kw-text);
+  min-height: 100vh;
+  width: 100%;
+}
+
+.kw-light .kw-btn {
+  background: #000000;
+  color: #ffffff;
+}
+
+.kw-light .kw-btn-outline {
+  background: transparent;
+  color: var(--kw-text);
+  border: 1px solid var(--kw-line);
+}
+
+.kw-light .kw-input {
+  background: #f7f7f7;
+  border: 1px solid var(--kw-line);
+  color: var(--kw-text);
+}
+.kw-light .kw-input::placeholder {
+  color: #a3a3a3;
+}
+.kw-light .kw-input:focus {
+  border-color: #999999;
+}

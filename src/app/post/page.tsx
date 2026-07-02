@@ -8,8 +8,10 @@ export const metadata: Metadata = {
 
 export default function PostSomethingPage() {
   return (
-    <div className="kw-frame">
-      <PostSomethingFlow />
+    <div className="kw-light">
+      <div className="kw-frame">
+        <PostSomethingFlow />
+      </div>
     </div>
   )
 }
