@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import { uploadKindnessWallImage, ACCEPTED_IMAGE_TYPES } from '@/lib/kindnessWallUpload'
 import { KINDNESS_WALL_GOAL } from '@/lib/kindnessWall'
 
-type Step = 'form' | 'confirm' | 'share'
+type Step = 'form' | 'confirm'
 
 export default function PostSomethingFlow() {
   const [step, setStep] = useState<Step>('form')
@@ -21,9 +21,11 @@ export default function PostSomethingFlow() {
   const [liveCount, setLiveCount] = useState<number | null>(null)
 
   const [email, setEmail] = useState('')
-  const [phone, setPhone] = useState('')
+  const [countryCode, setCountryCode] = useState('+1')
+  const [phoneNumber, setPhoneNumber] = useState('')
   const [notifyLoading, setNotifyLoading] = useState(false)
   const [notifyError, setNotifyError] = useState('')
+  const [notifySubmitted, setNotifySubmitted] = useState(false)
 
   function handlePhoto(e: React.ChangeEvent<HTMLInputElement>) {
     const f = e.target.files?.[0]
@@ -64,25 +66,26 @@ export default function PostSomethingFlow() {
 
   async function handleNotify(e: React.FormEvent) {
     e.preventDefault()
-    if (!email.trim()) return
+    if (!email.trim() || !countryCode.trim() || !phoneNumber.trim()) return
     setNotifyLoading(true)
     setNotifyError('')
     try {
+      const phone = `${countryCode.trim()} ${phoneNumber.trim()}`
       const res = await fetch('/api/kindness-wall/notify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email.trim(), phone: phone.trim() || null, post_id: postId }),
+        body: JSON.stringify({ email: email.trim(), phone, post_id: postId }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'something went wrong')
-      setStep('share')
+      setNotifySubmitted(true)
     } catch (err) {
       setNotifyError(err instanceof Error ? err.message : 'something went wrong. try again.')
     }
     setNotifyLoading(false)
   }
 
-  if (step === 'share') {
+  if (step === 'confirm') {
     const origin = typeof window !== 'undefined' ? window.location.origin : ''
     const shareUrl = origin
     const twitterText = `i just added to the kindness wall — a million small acts of kindness, one at a time. add yours: ${shareUrl}`
@@ -92,10 +95,69 @@ export default function PostSomethingFlow() {
 
     return (
       <div>
-        <h1 className="kw-headline text-[28px] md:text-[34px] mb-4">
-          you&apos;re in. now help it spread.
-        </h1>
-        <p className="kw-body text-[15px] mb-10 max-w-lg">
+        <p className="kw-headline text-[26px] md:text-[32px] mb-2">
+          you are number {liveCount !== null ? liveCount.toLocaleString() : '—'} out of{' '}
+          {KINDNESS_WALL_GOAL.toLocaleString()} in the pay-it-forward chain.
+        </p>
+        <p className="kw-body text-[16px] mb-10 max-w-lg">
+          that&apos;s amazing! that feeling — good, doing it and thinking about it — isn&apos;t it?
+          want to feel like this every day?
+        </p>
+
+        {notifySubmitted ? (
+          <p className="kw-body text-[14px] mb-10 max-w-sm">
+            you&apos;re on the list — we&apos;ll be in touch.
+          </p>
+        ) : (
+          <form onSubmit={handleNotify} className="max-w-sm mb-12">
+            <p className="kw-body text-[14px] mb-4">
+              enter your email &amp; phone below to get early access to something we&apos;re building
+              to help you feel good in all the noise happening around you and on your phone.
+            </p>
+            <div className="flex flex-col gap-3 mb-4">
+              <input
+                type="email"
+                required
+                placeholder="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                className="kw-input"
+              />
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  required
+                  placeholder="+1"
+                  value={countryCode}
+                  onChange={(e) => setCountryCode(e.target.value)}
+                  className="kw-input"
+                  style={{ width: 72, flexShrink: 0 }}
+                />
+                <input
+                  type="tel"
+                  required
+                  placeholder="phone number"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
+                  className="kw-input flex-1"
+                />
+              </div>
+            </div>
+            {notifyError && <p className="text-[13px] mb-3" style={{ color: '#ff6b6b' }}>{notifyError}</p>}
+            <button
+              type="submit"
+              disabled={notifyLoading || !email.trim() || !countryCode.trim() || !phoneNumber.trim()}
+              className="kw-btn disabled:opacity-40"
+            >
+              {notifyLoading ? 'submitting...' : 'notify me'}
+            </button>
+          </form>
+        )}
+
+        <h2 className="kw-headline text-[20px] mb-3">
+          now help it spread.
+        </h2>
+        <p className="kw-body text-[14px] mb-6 max-w-lg">
           share the wall with someone — it only takes one person to keep a chain of kindness going.
         </p>
         <div className="flex flex-col gap-3 max-w-xs">
@@ -139,53 +201,6 @@ export default function PostSomethingFlow() {
           linkedin doesn&apos;t accept pre-filled post text — we copied a suggested caption to
           your clipboard, just paste it in.
         </p>
-      </div>
-    )
-  }
-
-  if (step === 'confirm') {
-    return (
-      <div>
-        <p className="kw-headline text-[26px] md:text-[32px] mb-2">
-          you are number {liveCount !== null ? liveCount.toLocaleString() : '—'} out of{' '}
-          {KINDNESS_WALL_GOAL.toLocaleString()} in the pay-it-forward chain.
-        </p>
-        <p className="kw-body text-[16px] mb-10 max-w-lg">
-          that&apos;s amazing! that feeling — good, doing it and thinking about it — isn&apos;t it?
-          want to feel like this every day?
-        </p>
-
-        <form onSubmit={handleNotify} className="max-w-sm">
-          <p className="kw-body text-[14px] mb-4">
-            enter your email &amp; phone below to get early access to something we&apos;re building
-            to help you feel good in all the noise happening around you and on your phone.
-          </p>
-          <div className="flex flex-col gap-3 mb-4">
-            <input
-              type="email"
-              required
-              placeholder="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="kw-input"
-            />
-            <input
-              type="tel"
-              placeholder="phone (optional)"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
-              className="kw-input"
-            />
-          </div>
-          {notifyError && <p className="text-[13px] mb-3" style={{ color: '#ff6b6b' }}>{notifyError}</p>}
-          <button
-            type="submit"
-            disabled={notifyLoading || !email.trim()}
-            className="kw-btn disabled:opacity-40"
-          >
-            {notifyLoading ? 'submitting...' : 'notify me'}
-          </button>
-        </form>
       </div>
     )
   }

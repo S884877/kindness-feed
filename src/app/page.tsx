@@ -1,20 +1,22 @@
 import Link from 'next/link'
+import HomeCounter from '@/components/kindness-wall/HomeCounter'
 
 export default function KindnessWallLanding() {
   return (
     <div className="kw-split">
       <section className="kw-split-left">
         <h1 className="kw-headline text-[40px] md:text-[56px] mb-6">
-          the kindness wall.
+          hey. this is the kindness wall.
         </h1>
         <p className="kw-body text-[15px] md:text-[16px] max-w-md mb-3">
-          we&apos;re working toward a million kind acts — small things people did
-          for a friend, for family, or even for a stranger, just to put a
-          little more love into the world.
+          the goal is simple — 1 million kind acts around the world in a week.
+          here&apos;s how it works: do something nice for a friend, family, or even for a stranger. post it here. send it to atleast 2 friends (or more) and get them to
+          do the same for someone else. that&apos;s it.
         </p>
-        <p className="kw-body text-[15px] md:text-[16px] max-w-md mb-10">
-          why? because we need more of it.
+        <p className="kw-body text-[15px] md:text-[16px] max-w-md mb-6">
+          why do this? because the world needs more love and kindness.
         </p>
+        <HomeCounter />
         <div className="flex flex-wrap gap-3">
           <Link href="/post" className="kw-btn">
             post something

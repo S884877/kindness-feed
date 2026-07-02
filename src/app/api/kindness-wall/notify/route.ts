@@ -14,17 +14,20 @@ export async function POST(req: Request) {
   try {
     const body = await req.json()
     const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : ''
-    const phone = typeof body.phone === 'string' ? body.phone.trim() : null
+    const phone = typeof body.phone === 'string' ? body.phone.trim() : ''
     const post_id = typeof body.post_id === 'string' ? body.post_id : null
 
     if (!email || !EMAIL_RE.test(email)) {
       return NextResponse.json({ error: 'enter a valid email' }, { status: 400 })
     }
+    if (!phone) {
+      return NextResponse.json({ error: 'enter a phone number' }, { status: 400 })
+    }
 
     const supabase = admin()
     const { error } = await supabase.from('kindness_wall_leads').insert({
       email,
-      phone: phone || null,
+      phone,
       post_id,
     })
 
