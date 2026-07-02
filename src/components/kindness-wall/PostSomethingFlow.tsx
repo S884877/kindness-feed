@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
+import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { uploadKindnessWallImage, ACCEPTED_IMAGE_TYPES } from '@/lib/kindnessWallUpload'
 import { KINDNESS_WALL_GOAL } from '@/lib/kindnessWall'
@@ -88,19 +89,55 @@ export default function PostSomethingFlow() {
   if (step === 'confirm') {
     const origin = typeof window !== 'undefined' ? window.location.origin : ''
     const shareUrl = origin
-    const twitterText = `i just added to the kindness wall — a million small acts of kindness, one at a time. add yours: ${shareUrl}`
-    const facebookText = `the kindness wall: a million kind acts, together. see what people are doing for each other: ${shareUrl}`
-    const whatsappText = `i just added to the kindness wall 🤍 add your own kind act: ${shareUrl}`
-    const linkedinText = `I recently added to the kindness wall — a growing collection of small acts of kindness, one person at a time. Take a look at what people are doing for each other, and consider adding your own: ${shareUrl}`
+    const whatsappText = `i did something nice today. i want you to do something nice for someone else and post it here: ${shareUrl}`
+    const messagesText = `i did something nice today. i want you to do something nice for someone else and post it here: ${shareUrl}`
+    const facebookText = `i did something nice today. i want you to do something nice for someone else and post it here: ${shareUrl}`
+    const twitterText = `i did something nice today. i want you to do something nice for someone else and post it here: ${shareUrl}`
+    const instagramText = `i did something nice today. i want you to do something nice for someone else and post it here:`
+
+    const isIOS = typeof navigator !== 'undefined' && /iPad|iPhone|iPod/.test(navigator.userAgent)
+    const smsHref = `sms:${isIOS ? '&' : '?'}body=${encodeURIComponent(messagesText)}`
+
+    async function shareToInstagram() {
+      if (typeof navigator !== 'undefined' && navigator.share) {
+        try {
+          await navigator.share({ title: 'the kindness wall', text: instagramText, url: shareUrl })
+        } catch {}
+      } else {
+        try { await navigator.clipboard.writeText(`${instagramText} ${shareUrl}`) } catch {}
+        alert('link copied — open instagram and send it or add it to your story.')
+      }
+    }
 
     return (
       <div>
         <p className="kw-headline text-[26px] md:text-[32px] mb-2">
           you are number {liveCount !== null ? liveCount.toLocaleString() : '—'} out of{' '}
-          {KINDNESS_WALL_GOAL.toLocaleString()} in the pay-it-forward chain.
+          {KINDNESS_WALL_GOAL.toLocaleString()} in the pay-it-forward chain.{' '}
+          <Link
+            href="/feed"
+            aria-label="see it on the feed"
+            title="see it on the feed"
+            className="inline-flex align-middle ml-1"
+            style={{ verticalAlign: 'middle' }}
+          >
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+          </Link>
         </p>
         <p className="kw-body text-[16px] mb-10 max-w-lg">
-          that&apos;s amazing! that feeling — good, doing it and thinking about it — isn&apos;t it?
+          you made someone smile today. that feels good, doesn't it?
           want to feel like this every day?
         </p>
 
@@ -112,7 +149,7 @@ export default function PostSomethingFlow() {
           <form onSubmit={handleNotify} className="max-w-sm mb-12">
             <p className="kw-body text-[14px] mb-4">
               enter your email &amp; phone below to get early access to something we&apos;re building
-              to help you feel good in all the noise happening around you and on your phone.
+              to help you feel good (just like today) amid all the noise around you.
             </p>
             <div className="flex flex-col gap-3 mb-4">
               <input
@@ -155,11 +192,8 @@ export default function PostSomethingFlow() {
         )}
 
         <h2 className="kw-headline text-[20px] mb-3">
-          now help it spread.
+          now ask a friend, your mom, dad bf, gf or anyone to do something nice for someone else.
         </h2>
-        <p className="kw-body text-[14px] mb-6 max-w-lg">
-          share the wall with someone — it only takes one person to keep a chain of kindness going.
-        </p>
         <div className="flex flex-col gap-3 max-w-xs">
           <a
             className="kw-btn"
@@ -167,7 +201,10 @@ export default function PostSomethingFlow() {
             rel="noopener noreferrer"
             href={`https://wa.me/?text=${encodeURIComponent(whatsappText)}`}
           >
-            share on whatsapp
+            share to whatsapp
+          </a>
+          <a className="kw-btn" href={smsHref}>
+            share to messages
           </a>
           <a
             className="kw-btn"
@@ -185,22 +222,10 @@ export default function PostSomethingFlow() {
           >
             share on twitter / x
           </a>
-          <a
-            className="kw-btn"
-            target="_blank"
-            rel="noopener noreferrer"
-            href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(shareUrl)}`}
-            onClick={async () => {
-              try { await navigator.clipboard.writeText(linkedinText) } catch {}
-            }}
-          >
-            share on linkedin
-          </a>
+          <button type="button" className="kw-btn" onClick={shareToInstagram}>
+            send to instagram
+          </button>
         </div>
-        <p className="kw-body text-[12px] mt-4 max-w-xs">
-          linkedin doesn&apos;t accept pre-filled post text — we copied a suggested caption to
-          your clipboard, just paste it in.
-        </p>
       </div>
     )
   }
