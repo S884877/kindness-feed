@@ -34,7 +34,7 @@ export default function KindnessWallLanding() {
           playsInline
           poster=""
         >
-          <source src="/kindness-wall/hero-loop.mp4" type="video/mp4" />
+          <source src="/hero-loop.mp4" type="video/mp4" />
         </video>
       </div>
     </div>
